@@ -51,7 +51,12 @@ export default function ProviderRegisterScreen() {
       hapticNotification();
       router.replace('/(provider)/dashboard');
     } catch (err: any) {
-      Alert.alert('خطأ', err?.response?.data?.message || 'حدث خطأ أثناء التسجيل');
+      const msg =
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        (err?.request ? 'تعذر الاتصال بالخادم. تحقق من اتصالك وحاول مرة أخرى.' : null) ||
+        'حدث خطأ أثناء التسجيل';
+      Alert.alert('خطأ', msg);
     } finally {
       setLoading(false);
     }

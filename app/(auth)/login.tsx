@@ -49,7 +49,11 @@ export default function LoginScreen() {
       router.replace('/(buyer)');
     } catch (err: any) {
       hapticNotification('error');
-      const msg = err?.response?.data?.message || 'البريد الإلكتروني أو كلمة المرور غير صحيحة';
+      const msg =
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        (err?.request ? 'تعذر الاتصال بالخادم. تحقق من اتصالك وحاول مرة أخرى.' : null) ||
+        'البريد الإلكتروني أو كلمة المرور غير صحيحة';
       Alert.alert('خطأ في تسجيل الدخول', msg);
     } finally {
       setLoading(false);
