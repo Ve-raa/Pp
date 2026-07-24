@@ -56,10 +56,12 @@ export default function CheckoutScreen() {
           method: selectedPayment,
           amount: orderTotal,
           buyerId: buyerUser?.id ?? '',
-          returnUrl: `vera://order/${order.id}`,
+          returnUrl: `https://veraapp.app/payment/return?orderId=${order.id}`,
+          cancelUrl: `https://veraapp.app/payment/cancel?orderId=${order.id}`,
         });
 
-        if (payment.demo) {
+        // Only show demo error for non-Stripe methods (Stripe is real)
+        if (payment.demo && selectedPayment !== 'stripe') {
           throw new Error(payment.message || 'طريقة الدفع هذه غير مفعلة حاليا.');
         }
 

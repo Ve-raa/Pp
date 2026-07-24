@@ -264,26 +264,26 @@ export default function ServiceDetailScreen() {
       </ScrollView>
 
       {/* Bottom CTA */}
-      <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 12 }]}>
+      <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 8 }]}>
         <View style={styles.qtyControl}>
           <TouchableOpacity
             onPress={() => setQuantity((q) => Math.max(1, q + 1))}
             style={styles.qtyBtn}
           >
-            <Ionicons name="add" size={18} color={Colors.primary} />
+            <Ionicons name="add" size={16} color={Colors.primary} />
           </TouchableOpacity>
           <Text style={styles.qtyText}>{quantity}</Text>
           <TouchableOpacity
             onPress={() => setQuantity((q) => Math.max(1, q - 1))}
             style={styles.qtyBtn}
           >
-            <Ionicons name="remove" size={18} color={Colors.purpleMid} />
+            <Ionicons name="remove" size={16} color={Colors.purpleMid} />
           </TouchableOpacity>
         </View>
         <Button
-          title={`أضف للسلة — ${(service.price * quantity).toFixed(2)}د.إ`}
+          title={`أضف إلى السلة · ${(service.price * quantity).toFixed(2)}د.إ`}
           onPress={handleAddToCart}
-          size="lg"
+          size="md"
           style={styles.addBtn}
         />
       </View>
@@ -375,20 +375,29 @@ const styles = StyleSheet.create({
     right: 0,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
     paddingHorizontal: 16,
-    paddingTop: 12,
+    paddingTop: 10,
     backgroundColor: Colors.cardBg,
     borderTopWidth: 1,
     borderTopColor: Colors.border,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.07,
+    shadowRadius: 6,
+    elevation: 6,
   },
-  qtyControl: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: Colors.lightPurple, borderRadius: 12, padding: 6 },
-  qtyBtn: { width: 30, height: 30, borderRadius: 15, backgroundColor: Colors.cardBg, alignItems: 'center', justifyContent: 'center' },
-  qtyText: { fontFamily: 'Cairo_700Bold', fontSize: 16, color: Colors.textPrimary, minWidth: 24, textAlign: 'center' },
+  qtyControl: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: Colors.lightPurple,
+    borderRadius: 10,
+    padding: 5,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  qtyBtn: { width: 28, height: 28, borderRadius: 8, backgroundColor: Colors.cardBg, alignItems: 'center', justifyContent: 'center' },
+  qtyText: { fontFamily: 'Cairo_700Bold', fontSize: 15, color: Colors.textPrimary, minWidth: 22, textAlign: 'center' },
   addBtn: { flex: 1 },
 });
