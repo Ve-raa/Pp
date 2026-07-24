@@ -22,10 +22,9 @@ export async function clearCart(): Promise<{ message: string }> {
 }
 
 export async function applyPromoCode(code: string): Promise<PromoCodeResponse> {
-  return buyerPost<PromoCodeResponse>('/api/cart/promo', { code });
+  return buyerPost<PromoCodeResponse>('/api/buyer/cart/promo', { code });
 }
 
 export async function removePromoCode(): Promise<{ message: string }> {
-  // Backend promo endpoint: DELETE /api/cart/promo
-  return buyerDelete('/api/cart/promo');
+  return buyerDelete('/api/buyer/cart/promo');
 }

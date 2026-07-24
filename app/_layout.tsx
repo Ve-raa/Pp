@@ -5,14 +5,18 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useFonts, Cairo_400Regular, Cairo_600SemiBold, Cairo_700Bold } from '@expo-google-fonts/cairo';
 import * as SplashScreen from 'expo-splash-screen';
-import { I18nManager, StyleSheet } from 'react-native';
+import { I18nManager, StyleSheet, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useAuthStore } from '../src/store/authStore';
 import { setUnauthorizedHandler } from '../src/api/client';
 
-// Force RTL for Arabic
-I18nManager.allowRTL(true);
-I18nManager.forceRTL(true);
+// Force RTL for Arabic — guard against unnecessary reload loop.
+// On iOS/Android: if the layout direction is already RTL, skip forcing it.
+// On web: RTL is handled via CSS; skip the native forceRTL call entirely.
+if (Platform.OS !== 'web' && !I18nManager.isRTL) {
+  I18nManager.allowRTL(true);
+  I18nManager.forceRTL(true);
+}
 
 SplashScreen.preventAutoHideAsync();
 
@@ -49,10 +53,12 @@ export default function RootLayout() {
         }
       });
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     hydrateFromStorage();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

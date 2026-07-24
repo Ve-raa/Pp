@@ -104,7 +104,7 @@ export async function getServices(params?: {
 }
 
 export async function getServiceById(id: string): Promise<Service> {
-  const data = await publicGet<any>(`/api/services/${id}`);
+  const data = await publicGet<any>(`/api/public/services/${id}`);
   // Backend returns { service: {...}, reviews: [...], related: [...] }
   const raw = data?.service ?? data;
   return mapDetailService(raw);

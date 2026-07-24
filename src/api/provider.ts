@@ -41,10 +41,8 @@ export async function createProviderService(data: Partial<Service>): Promise<Ser
 }
 
 export async function updateProviderService(id: string, data: Partial<Service>): Promise<Service> {
-  // Backend uses PATCH not PUT
-  const res = await import('./client').then(m =>
-    m.providerClient.patch<Service>(`/api/provider/services/${id}`, data)
-  );
+  const { providerClient } = await import('./client');
+  const res = await providerClient.patch<Service>(`/api/provider/services/${id}`, data);
   return res.data;
 }
 
@@ -62,8 +60,11 @@ export async function getProviderOrders(params?: {
 }
 
 export async function updateOrderStatus(orderId: string, status: string): Promise<{ message: string }> {
-  const res = await import('./client').then(m =>
-    m.providerClient.patch<{ message: string }>(`/api/provider/orders`, { orderId, status })
+  // PATCH /api/provider/orders/:orderId with { status }
+  const { providerClient } = await import('./client');
+  const res = await providerClient.patch<{ message: string }>(
+    `/api/provider/orders/${orderId}`,
+    { status }
   );
   return res.data;
 }
@@ -92,27 +93,7 @@ export async function getProviderProfile(): Promise<ProviderUser> {
 }
 
 export async function updateProviderProfile(data: Partial<ProviderUser>): Promise<ProviderUser> {
-  // Backend uses PATCH not PUT
-  const res = await import('./client').then(m =>
-    m.providerClient.patch<ProviderUser>('/api/provider/profile', data)
-  );
+  const { providerClient } = await import('./client');
+  const res = await providerClient.patch<ProviderUser>('/api/provider/profile', data);
   return res.data;
-}
-
-// ─── Subscription ─────────────────────────────────────────────────────────────
-export async function getSubscriptionPlans(): Promise<{
-  id: string;
-  name: string;
-  price: number;
-  features: string[];
-}[]> {
-  const data = await providerGet<any>('/api/provider/subscription');
-  return data?.plans ?? data ?? [];
-}
-
-export async function subscribeToplan(planId: string): Promise<{
-  paymentUrl?: string;
-  message?: string;
-}> {
-  return providerPost('/api/provider/subscription/purchase', { planId });
 }

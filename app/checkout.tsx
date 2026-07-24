@@ -30,6 +30,7 @@ export default function CheckoutScreen() {
   const [loading, setLoading] = useState(false);
   const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
   const [paymentModal, setPaymentModal] = useState(false);
+  const [pendingOrderId, setPendingOrderId] = useState<string | null>(null);
 
   const handlePlaceOrder = async () => {
     if (!items.length) return;
@@ -52,6 +53,7 @@ export default function CheckoutScreen() {
         });
 
         if (payment.paymentUrl) {
+          setPendingOrderId(order.id);
           setPaymentUrl(payment.paymentUrl);
           setPaymentModal(true);
           return;
@@ -71,10 +73,21 @@ export default function CheckoutScreen() {
   };
 
   const handleWebViewNav = (navState: { url: string }) => {
-    if (navState.url.includes('vera://') || navState.url.includes('success') || navState.url.includes('return')) {
+    const url = navState.url;
+    const isReturnUrl =
+      url.includes('vera://') ||
+      url.includes('/payment/return') ||
+      url.includes('/payment/success') ||
+      url.includes('order-confirmed');
+    if (isReturnUrl) {
       setPaymentModal(false);
       clearCart();
-      router.replace('/(buyer)/orders');
+      hapticNotification();
+      if (pendingOrderId) {
+        router.replace(('/order/' + pendingOrderId) as any);
+      } else {
+        router.replace('/(buyer)/orders');
+      }
     }
   };
 

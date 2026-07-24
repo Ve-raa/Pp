@@ -18,9 +18,10 @@ export async function getLoyaltyHistory(params?: {
   page?: number;
   limit?: number;
 }): Promise<{ history: LoyaltyInfo['history']; total: number }> {
-  const data = await buyerGet<any>('/api/loyalty', params as Record<string, unknown>);
+  // Dedicated history endpoint instead of the info endpoint
+  const data = await buyerGet<any>('/api/loyalty/history', params as Record<string, unknown>);
   return {
-    history: data?.history ?? [],
+    history: data?.history ?? data?.items ?? [],
     total: data?.total ?? 0,
   };
 }

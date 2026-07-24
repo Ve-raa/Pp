@@ -95,6 +95,8 @@ export interface Service {
   originalPrice?: number;
   viewsCount?: number;
   ordersCount?: number;
+  /** Promotional badge label (e.g. 'جديد', 'الأكثر طلباً') */
+  badge?: string;
 }
 
 export interface ServiceProvider {
@@ -150,10 +152,10 @@ export interface Cart {
 }
 
 export interface PromoCodeResponse {
+  isValid: boolean;
   code: string;
   discount: number;
   type: 'percentage' | 'fixed';
-  isValid: boolean;
   message?: string;
 }
 
@@ -166,28 +168,7 @@ export type OrderStatus =
   | 'cancelled'
   | 'refunded';
 
-export interface Order {
-  id: string;
-  orderNumber: string;
-  status: OrderStatus;
-  items: OrderItem[];
-  subtotal: number;
-  total: number;
-  discount?: number;
-  promoCode?: string;
-  paymentMethod?: string;
-  paymentStatus?: 'pending' | 'paid' | 'failed' | 'refunded';
-  address?: string;
-  notes?: string;
-  createdAt: string;
-  updatedAt?: string;
-  estimatedDelivery?: string;
-  providerId?: string;
-  provider?: ServiceProvider;
-  rating?: number;
-  review?: string;
-  trackingUrl?: string;
-}
+export type PaymentMethod = 'stripe' | 'tabby' | 'tamara' | 'wallet' | 'cash';
 
 export interface OrderItem {
   id: string;
@@ -198,43 +179,89 @@ export interface OrderItem {
   notes?: string;
 }
 
+export interface Order {
+  id: string;
+  orderNumber: string;
+  status: OrderStatus;
+  paymentMethod: PaymentMethod;
+  paymentStatus?: 'pending' | 'paid' | 'failed' | 'refunded';
+  items: OrderItem[];
+  subtotal: number;
+  discount?: number;
+  total: number;
+  promoCode?: string;
+  notes?: string;
+  address?: string;
+  providerId?: string;
+  provider?: ServiceProvider;
+  createdAt: string;
+  updatedAt?: string;
+  completedAt?: string;
+  rating?: number;
+  review?: string;
+}
+
+export interface PaymentInitRequest {
+  orderId: string;
+  method: string;
+  returnUrl?: string;
+  cancelUrl?: string;
+}
+
+export interface PaymentInitResponse {
+  paymentUrl?: string;
+  paymentId?: string;
+  clientSecret?: string;
+}
+
 // ─── Wallet Types ─────────────────────────────────────────────────────────────
+export interface Wallet {
+  id?: string;
+  balance: number;
+  currency: string;
+  pendingBalance?: number;
+}
+
 export interface WalletTransaction {
   id: string;
   type: 'credit' | 'debit';
   amount: number;
-  currency?: string;
   description: string;
+  orderId?: string;
+  status: 'completed' | 'pending' | 'failed';
   createdAt: string;
-  balance?: number;
-  referenceId?: string;
-}
-
-export interface Wallet {
-  balance: number;
-  currency: string;
-  transactions: WalletTransaction[];
 }
 
 // ─── Loyalty Types ────────────────────────────────────────────────────────────
+export interface LoyaltyTier {
+  name: string;
+  minPoints: number;
+  maxPoints?: number;
+  color: string;
+  icon: string;
+  benefits?: string[];
+}
+
+export interface LoyaltyHistoryItem {
+  id: string;
+  type: 'earned' | 'redeemed' | 'expired';
+  points: number;
+  description: string;
+  orderId?: string;
+  createdAt: string;
+}
+
 export interface LoyaltyInfo {
   points: number;
   tier: string;
-  tierName?: string;
+  tierColor?: string;
+  tierIcon?: string;
   nextTier?: string;
   pointsToNextTier?: number;
   totalEarned?: number;
   totalRedeemed?: number;
-  expiryDate?: string;
-  history?: LoyaltyTransaction[];
-}
-
-export interface LoyaltyTransaction {
-  id: string;
-  type: 'earn' | 'redeem';
-  points: number;
-  description: string;
-  createdAt: string;
+  history?: LoyaltyHistoryItem[];
+  tiers?: LoyaltyTier[];
 }
 
 // ─── Notification Types ───────────────────────────────────────────────────────
@@ -242,42 +269,26 @@ export interface Notification {
   id: string;
   title: string;
   body: string;
-  type?: string;
+  type?: 'order' | 'payment' | 'promo' | 'system' | 'general';
   isRead: boolean;
-  createdAt: string;
   data?: Record<string, unknown>;
+  createdAt: string;
 }
 
 // ─── Review Types ─────────────────────────────────────────────────────────────
 export interface Review {
   id: string;
-  userId: string;
-  userName: string;
-  userAvatar?: string;
-  serviceId: string;
   rating: number;
   comment?: string;
+  userId?: string;
+  userName?: string;
+  userAvatar?: string;
+  serviceId?: string;
+  orderId?: string;
   createdAt: string;
-  images?: string[];
 }
 
-// ─── Payment Types ────────────────────────────────────────────────────────────
-export type PaymentMethod = 'stripe' | 'tabby' | 'tamara' | 'wallet' | 'cash';
-
-export interface PaymentInitRequest {
-  orderId: string;
-  method: PaymentMethod;
-  returnUrl?: string;
-}
-
-export interface PaymentInitResponse {
-  paymentUrl?: string;
-  clientSecret?: string;
-  sessionId?: string;
-  status: string;
-}
-
-// ─── Provider Types ───────────────────────────────────────────────────────────
+// ─── Provider Dashboard ───────────────────────────────────────────────────────
 export interface ProviderDashboard {
   totalOrders: number;
   pendingOrders: number;

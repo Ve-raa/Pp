@@ -11,9 +11,10 @@ export async function getWalletTransactions(params?: {
   limit?: number;
   type?: 'credit' | 'debit';
 }): Promise<{ transactions: WalletTransaction[]; total: number }> {
-  const data = await buyerGet<any>('/api/buyer/wallet', params as Record<string, unknown>);
+  // Use the dedicated transactions endpoint — not the wallet balance endpoint
+  const data = await buyerGet<any>('/api/buyer/wallet/transactions', params as Record<string, unknown>);
   return {
-    transactions: data?.transactions ?? [],
+    transactions: data?.transactions ?? data?.items ?? [],
     total: data?.total ?? 0,
   };
 }
@@ -23,7 +24,6 @@ export async function topUpWallet(amount: number, _method?: string): Promise<{
   clientSecret?: string;
   message?: string;
 }> {
-  // Backend endpoint: POST /api/buyer/wallet/topup { amount }
   const res = await buyerPost<any>('/api/buyer/wallet/topup', { amount });
   return {
     paymentUrl: res?.url ?? res?.paymentUrl,
