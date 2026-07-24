@@ -55,6 +55,8 @@ export async function initPayment(data: PaymentInitRequest): Promise<PaymentInit
 
   const payload: Record<string, unknown> = {
     orderId: data.orderId,
+    amount: data.amount,
+    buyerId: data.buyerId,
     returnUrl: data.returnUrl ?? 'vera://payment/return',
     cancelUrl: data.cancelUrl ?? 'vera://payment/cancel',
   };

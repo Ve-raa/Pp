@@ -204,6 +204,8 @@ export interface Order {
 export interface PaymentInitRequest {
   orderId: string;
   method: string;
+  amount: number;
+  buyerId: string;
   returnUrl?: string;
   cancelUrl?: string;
 }

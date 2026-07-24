@@ -11,6 +11,7 @@ import { Colors } from '../src/constants/colors';
 import { Button } from '../src/components/common/Button';
 import { Header } from '../src/components/common/Header';
 import { useCartStore } from '../src/store/cartStore';
+import { useAuthStore } from '../src/store/authStore';
 import { createOrder, initPayment } from '../src/api/orders';
 import type { PaymentMethod } from '../src/types';
 
@@ -25,6 +26,7 @@ export default function CheckoutScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { items, total, promoCode, clearCart } = useCartStore();
+  const { buyerUser } = useAuthStore();
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethod>('stripe');
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
@@ -49,6 +51,8 @@ export default function CheckoutScreen() {
         const payment = await initPayment({
           orderId: order.id,
           method: selectedPayment,
+          amount: t,
+          buyerId: buyerUser?.id ?? '',
           returnUrl: `vera://order/${order.id}`,
         });
 
