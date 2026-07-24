@@ -50,7 +50,11 @@ export default function RegisterScreen() {
       router.replace('/(buyer)');
     } catch (err: any) {
       hapticNotification('error');
-      const msg = err?.response?.data?.message || 'حدث خطأ أثناء إنشاء الحساب';
+      const msg =
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        (err?.request ? 'تعذر الاتصال بالخادم. تحقق من اتصالك وحاول مرة أخرى.' : null) ||
+        'حدث خطأ أثناء إنشاء الحساب';
       Alert.alert('خطأ', msg);
     } finally {
       setLoading(false);

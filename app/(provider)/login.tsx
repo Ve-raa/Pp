@@ -39,7 +39,12 @@ export default function ProviderLoginScreen() {
       router.replace('/(provider)/dashboard');
     } catch (err: any) {
       hapticNotification('error');
-      Alert.alert('خطأ', err?.response?.data?.message || 'بيانات غير صحيحة');
+      const msg =
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        (err?.request ? 'تعذر الاتصال بالخادم. تحقق من اتصالك وحاول مرة أخرى.' : null) ||
+        'بيانات غير صحيحة';
+      Alert.alert('خطأ', msg);
     } finally {
       setLoading(false);
     }
