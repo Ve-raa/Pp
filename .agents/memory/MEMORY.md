@@ -1,0 +1,1 @@
+- [GitHub preview workflow](github-preview-workflow.md) — GitHub token secrets are available to direct Git operations, not the built-in gitPush callback.
