@@ -38,11 +38,12 @@ jobs:
 
       # ── 4. Install JS dependencies ─────────────────────────────────────────
       - name: Install dependencies
-        run: npm ci
+        run: npm install --legacy-peer-deps
 
       # ── 5. Expo Prebuild → generate android/ native project ───────────────
+      #       Use the locally installed expo binary (not npx which may fetch wrong version)
       - name: Expo Prebuild (Android)
-        run: npx expo prebuild --platform android --clean
+        run: ./node_modules/.bin/expo prebuild --platform android --clean
         env:
           EXPO_NO_TELEMETRY: '1'
           EXPO_PUBLIC_API_URL: 'https://veraapp.app'
@@ -51,10 +52,11 @@ jobs:
       - name: Accept Android SDK licences
         run: yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
-      # ── 7. Build Debug APK (no signing keystore required) ─────────────────
+      # ── 7. Make gradlew executable ─────────────────────────────────────────
       - name: Make gradlew executable
         run: chmod +x android/gradlew
 
+      # ── 8. Build Release APK ───────────────────────────────────────────────
       - name: Build APK
         working-directory: android
         run: ./gradlew assembleRelease --no-daemon --stacktrace
@@ -63,9 +65,9 @@ jobs:
             -Dorg.gradle.daemon=false
             -Dorg.gradle.configureondemand=false
             -Dorg.gradle.parallel=false
-            -Dorg.gradle.jvmargs=-Xmx4g\ -XX:MaxMetaspaceSize=512m
+            -Dorg.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=512m
 
-      # ── 8. Locate the APK ──────────────────────────────────────────────────
+      # ── 9. Locate the APK ──────────────────────────────────────────────────
       - name: Locate APK
         id: locate
         run: |
@@ -73,7 +75,7 @@ jobs:
           echo "path=$APK" >> $GITHUB_OUTPUT
           echo "✅ APK found at: $APK"
 
-      # ── 9. Upload as workflow artifact (30-day retention) ─────────────────
+      # ── 10. Upload as workflow artifact (30-day retention) ─────────────────
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
@@ -81,7 +83,7 @@ jobs:
           path: ${{ steps.locate.outputs.path }}
           retention-days: 30
 
-      # ── 10. Create GitHub Release with APK download link ──────────────────
+      # ── 11. Create GitHub Release with APK download link ──────────────────
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -91,7 +93,7 @@ jobs:
             ## 📱 تطبيق VÉRA — بناء رقم ${{ github.run_number }}
 
             ### طريقة التثبيت على الأندرويد
-            1. **حمّل الملف** `vera-app.apk` من قسم Assets أدناه
+            1. **حمّل الملف** `app-release.apk` من قسم **Assets** أدناه ⬇️
             2. افتح الملف على هاتفك
             3. إذا طلب منك تفعيل "السماح بالتثبيت من مصادر غير معروفة" → فعّله من الإعدادات
             4. اكمل التثبيت واستمتع بالتطبيق 🎉
@@ -99,7 +101,6 @@ jobs:
             ---
             **Commit:** `${{ github.sha }}`
             **Branch:** `${{ github.ref_name }}`
-            **Date:** ${{ github.event.head_commit.timestamp }}
           files: ${{ steps.locate.outputs.path }}
           draft: false
           prerelease: false
