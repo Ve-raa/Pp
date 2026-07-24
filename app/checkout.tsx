@@ -12,7 +12,7 @@ import { Button } from '../src/components/common/Button';
 import { Header } from '../src/components/common/Header';
 import { useCartStore } from '../src/store/cartStore';
 import { useAuthStore } from '../src/store/authStore';
-import { createOrder, initPayment } from '../src/api/orders';
+import { cancelOrder, createOrder, initPayment } from '../src/api/orders';
 import type { PaymentMethod } from '../src/types';
 
 const PAYMENT_OPTIONS = [
@@ -33,10 +33,12 @@ export default function CheckoutScreen() {
   const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
   const [paymentModal, setPaymentModal] = useState(false);
   const [pendingOrderId, setPendingOrderId] = useState<string | null>(null);
+  const orderTotal = total();
 
   const handlePlaceOrder = async () => {
     if (!items.length) return;
     setLoading(true);
+    let createdOrderId: string | null = null;
     try {
       // Create order
       const order = await createOrder({
@@ -45,16 +47,21 @@ export default function CheckoutScreen() {
         promoCode: promoCode || undefined,
         notes,
       });
+      createdOrderId = order.id;
 
       // Init payment
       if (selectedPayment !== 'wallet') {
         const payment = await initPayment({
           orderId: order.id,
           method: selectedPayment,
-          amount: t,
+          amount: orderTotal,
           buyerId: buyerUser?.id ?? '',
           returnUrl: `vera://order/${order.id}`,
         });
+
+        if (payment.demo) {
+          throw new Error(payment.message || 'طريقة الدفع هذه غير مفعلة حاليا.');
+        }
 
         if (payment.paymentUrl) {
           setPendingOrderId(order.id);
@@ -62,6 +69,8 @@ export default function CheckoutScreen() {
           setPaymentModal(true);
           return;
         }
+
+        throw new Error('لم تُرجع بوابة الدفع رابط دفع صالحا. حاول مرة أخرى.');
       }
 
       // Wallet or direct payment
@@ -69,7 +78,14 @@ export default function CheckoutScreen() {
       hapticNotification();
       router.replace(`/order/${order.id}`);
     } catch (err: any) {
-      const msg = err?.response?.data?.message || 'حدث خطأ أثناء تقديم الطلب. حاول مجدداً.';
+      if (createdOrderId) {
+        await cancelOrder(createdOrderId, 'payment_initialization_failed').catch(() => undefined);
+      }
+      const msg =
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        err?.message ||
+        'حدث خطأ أثناء تقديم الطلب. حاول مجدداً.';
       Alert.alert('خطأ', msg);
     } finally {
       setLoading(false);
@@ -78,13 +94,24 @@ export default function CheckoutScreen() {
 
   const handleWebViewNav = (navState: { url: string }) => {
     const url = navState.url;
+    const isCancelUrl =
+      url.includes('vera://payment/cancel') ||
+      url.includes('/payment/cancel') ||
+      url.includes('payment-cancelled') ||
+      url.includes('payment-canceled');
     const isReturnUrl =
       url.includes('vera://') ||
       url.includes('/payment/return') ||
       url.includes('/payment/success') ||
       url.includes('order-confirmed');
-    if (isReturnUrl) {
+    if (isCancelUrl) {
       setPaymentModal(false);
+      setPaymentUrl(null);
+      return;
+    }
+    if (isReturnUrl && !url.includes('vera://payment/cancel')) {
+      setPaymentModal(false);
+      setPaymentUrl(null);
       clearCart();
       hapticNotification();
       if (pendingOrderId) {
@@ -94,8 +121,6 @@ export default function CheckoutScreen() {
       }
     }
   };
-
-  const t = total();
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -113,7 +138,7 @@ export default function CheckoutScreen() {
           ))}
           <View style={styles.divider} />
           <View style={styles.totalRow}>
-            <Text style={styles.totalAmt}>{t.toFixed(2)} درهم</Text>
+            <Text style={styles.totalAmt}>{orderTotal.toFixed(2)} درهم</Text>
             <Text style={styles.totalLabel}>الإجمالي</Text>
           </View>
         </View>
@@ -172,7 +197,7 @@ export default function CheckoutScreen() {
       {/* Place Order CTA */}
       <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 12 }]}>
         <Button
-          title={`تأكيد الطلب — ${t.toFixed(2)} درهم`}
+          title={`تأكيد الطلب — ${orderTotal.toFixed(2)} درهم`}
           onPress={handlePlaceOrder}
           loading={loading}
           fullWidth

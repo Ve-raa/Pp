@@ -215,6 +215,8 @@ export interface PaymentInitResponse {
   paymentId?: string;
   clientSecret?: string;
   status?: string;
+  demo?: boolean;
+  message?: string;
 }
 
 // ─── Wallet Types ─────────────────────────────────────────────────────────────

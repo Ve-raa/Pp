@@ -67,6 +67,8 @@ export async function initPayment(data: PaymentInitRequest): Promise<PaymentInit
     paymentId: res?.sessionId ?? res?.paymentId ?? res?.id,
     clientSecret: res?.clientSecret,
     status: res?.status ?? 'pending',
+    demo: res?.demo === true,
+    message: res?.message,
   };
 }
 
