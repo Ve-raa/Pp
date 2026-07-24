@@ -6,11 +6,9 @@ import type {
   AuthResponse,
 } from '../types';
 
-// ─── Helper: extract JWT value from Set-Cookie response header ────────────────
-// React Native exposes Set-Cookie in Axios response headers (unlike browsers).
-// If extraction fails (some iOS builds filter HttpOnly cookies), we fall back
-// to 'via-cookie' so the auth store records a logged-in state and native cookie
-// jar handles subsequent requests via withCredentials: true.
+// ─── Helper: extract JWT from Set-Cookie response header ──────────────────────
+// The server returns the JWT exclusively via Set-Cookie (HttpOnly).
+// In React Native, Axios CAN read Set-Cookie headers (unlike browsers).
 function extractCookieToken(headers: Record<string, any>, cookieName: string): string | null {
   const raw = headers?.['set-cookie'] ?? headers?.['Set-Cookie'];
   if (!raw) return null;
@@ -22,16 +20,21 @@ function extractCookieToken(headers: Record<string, any>, cookieName: string): s
 // ─── Buyer Auth ───────────────────────────────────────────────────────────────
 export async function buyerLogin(data: LoginRequest): Promise<AuthResponse> {
   const res = await publicClient.post('/api/buyer-auth/login', data);
-  // Try to read token from Set-Cookie header; fall back to 'via-cookie' so the
-  // auth store knows the session is active (cookie jar handles actual auth).
-  const token = extractCookieToken(res.headers, 'buyer_token') ?? 'via-cookie';
+  // FIX: Also check res.data.token as a fallback in case Set-Cookie is filtered
+  const token =
+    extractCookieToken(res.headers, 'buyer_token') ??
+    res.data?.token ??
+    'via-cookie';
   const user = res.data?.buyer ?? res.data?.user ?? res.data;
   return { token, user };
 }
 
 export async function buyerRegister(data: RegisterBuyerRequest): Promise<AuthResponse> {
   const res = await publicClient.post('/api/buyer-auth/register', data);
-  const token = extractCookieToken(res.headers, 'buyer_token') ?? 'via-cookie';
+  const token =
+    extractCookieToken(res.headers, 'buyer_token') ??
+    res.data?.token ??
+    'via-cookie';
   const user = res.data?.buyer ?? res.data?.user ?? res.data;
   return { token, user };
 }
@@ -49,14 +52,20 @@ export async function buyerResetPassword(token: string, password: string): Promi
 // ─── Provider Auth ────────────────────────────────────────────────────────────
 export async function providerLogin(data: LoginRequest): Promise<AuthResponse> {
   const res = await publicClient.post('/api/provider-auth/login', data);
-  const token = extractCookieToken(res.headers, 'provider_token') ?? 'via-cookie';
+  const token =
+    extractCookieToken(res.headers, 'provider_token') ??
+    res.data?.token ??
+    'via-cookie';
   const user = res.data?.provider ?? res.data?.user ?? res.data;
   return { token, user };
 }
 
 export async function providerRegister(data: RegisterProviderRequest): Promise<AuthResponse> {
   const res = await publicClient.post('/api/provider-auth/register', data);
-  const token = extractCookieToken(res.headers, 'provider_token') ?? 'via-cookie';
+  const token =
+    extractCookieToken(res.headers, 'provider_token') ??
+    res.data?.token ??
+    'via-cookie';
   const user = res.data?.provider ?? res.data?.user ?? res.data;
   return { token, user };
 }

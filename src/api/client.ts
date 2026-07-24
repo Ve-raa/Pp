@@ -33,7 +33,6 @@ export async function clearProviderToken(): Promise<void> {
 }
 
 // ─── Unauthorized Handler ─────────────────────────────────────────────────────
-// Called when a 401 is received — set via setUnauthorizedHandler in _layout.tsx
 let _onUnauthorized: (() => void) | null = null;
 export function setUnauthorizedHandler(handler: () => void) {
   _onUnauthorized = handler;
@@ -48,34 +47,33 @@ const baseConfig = {
     Accept: 'application/json',
     'Accept-Language': 'ar',
   },
-  // Sends native cookie jar automatically on iOS & Android
   withCredentials: true,
 };
 
 // ─── Axios Client Factory ─────────────────────────────────────────────────────
-function createClient(tokenGetter: () => Promise<string | null>): AxiosInstance {
+// FIX: The server uses cookie-based auth ONLY — it rejects Bearer tokens.
+// We must forward the stored JWT as a Cookie header on every authenticated request.
+function createClient(
+  tokenGetter: () => Promise<string | null>,
+  cookieName: string
+): AxiosInstance {
   const client = axios.create(baseConfig);
 
-  // Request interceptor: inject Bearer token only when it's a real JWT.
-  // The backend is cookie-based; withCredentials handles auth automatically.
-  // If the stored value is a sentinel like 'via-cookie', skip the header.
   client.interceptors.request.use(async (config) => {
     const token = await tokenGetter();
-    if (token && token.startsWith('eyJ')) {
-      config.headers.Authorization = `Bearer ${token}`;
+    // Only inject when we have a real JWT (starts with eyJ), not the sentinel 'via-cookie'
+    if (token && token !== 'via-cookie' && token.startsWith('eyJ')) {
+      config.headers['Cookie'] = `${cookieName}=${token}`;
     }
     return config;
   });
 
-  // Response interceptor: on 401, clear session and redirect to login
   client.interceptors.response.use(
     (response) => response,
     async (error: AxiosError) => {
       if (error.response?.status === 401) {
-        // Clear stored tokens so hydrateFromStorage sees a logged-out state
         await clearBuyerToken().catch(() => {});
         await clearProviderToken().catch(() => {});
-        // Notify root layout to redirect to login
         _onUnauthorized?.();
       }
       return Promise.reject(error);
@@ -86,8 +84,8 @@ function createClient(tokenGetter: () => Promise<string | null>): AxiosInstance 
 }
 
 // ─── Exported Clients ─────────────────────────────────────────────────────────
-export const buyerClient = createClient(getBuyerToken);
-export const providerClient = createClient(getProviderToken);
+export const buyerClient    = createClient(getBuyerToken,    'buyer_token');
+export const providerClient = createClient(getProviderToken, 'provider_token');
 
 // Public client — no auth token
 export const publicClient = axios.create(baseConfig);
