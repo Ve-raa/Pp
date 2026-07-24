@@ -74,7 +74,7 @@ export default function ProviderServicesScreen() {
                 <View style={[styles.statusDot, { backgroundColor: item.isAvailable ? Colors.success : Colors.error }]} />
                 <View style={styles.serviceInfo}>
                   <Text style={styles.serviceName}>{item.title}</Text>
-                  <Text style={styles.servicePrice}>{item.price} ر.س</Text>
+                  <Text style={styles.servicePrice}>{item.price} درهم</Text>
                 </View>
               </View>
               {item.description && (
@@ -108,7 +108,7 @@ export default function ProviderServicesScreen() {
             </View>
             <TextInput style={styles.input} placeholder="عنوان الخدمة *" placeholderTextColor={Colors.textLight} value={form.title} onChangeText={(v) => set('title', v)} textAlign="right" />
             <TextInput style={[styles.input, styles.textArea]} placeholder="وصف الخدمة" placeholderTextColor={Colors.textLight} value={form.description} onChangeText={(v) => set('description', v)} multiline numberOfLines={3} textAlign="right" textAlignVertical="top" />
-            <TextInput style={styles.input} placeholder="السعر (ر.س) *" placeholderTextColor={Colors.textLight} value={form.price} onChangeText={(v) => set('price', v)} keyboardType="numeric" textAlign="right" />
+            <TextInput style={styles.input} placeholder="السعر (درهم) *" placeholderTextColor={Colors.textLight} value={form.price} onChangeText={(v) => set('price', v)} keyboardType="numeric" textAlign="right" />
             <TextInput style={styles.input} placeholder="مدة التسليم (مثال: 1-3 أيام)" placeholderTextColor={Colors.textLight} value={form.deliveryTime} onChangeText={(v) => set('deliveryTime', v)} textAlign="right" />
             <Button title="إضافة الخدمة" onPress={() => createMutation.mutate()} loading={createMutation.isPending} disabled={!form.title || !form.price} fullWidth />
           </View>

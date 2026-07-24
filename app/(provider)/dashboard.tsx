@@ -79,9 +79,9 @@ export default function ProviderDashboardScreen() {
             </TouchableOpacity>
             <View>
               <Text style={styles.earningsLabel}>إجمالي الأرباح</Text>
-              <Text style={styles.earningsAmount}>{dashboard?.totalEarnings?.toFixed(2) || '0.00'} ر.س</Text>
+              <Text style={styles.earningsAmount}>{dashboard?.totalEarnings?.toFixed(2) || '0.00'} درهم</Text>
               <Text style={styles.earningsMonth}>
-                هذا الشهر: {dashboard?.thisMonthEarnings?.toFixed(2) || '0.00'} ر.س
+                هذا الشهر: {dashboard?.thisMonthEarnings?.toFixed(2) || '0.00'} درهم
               </Text>
             </View>
           </View>
@@ -147,7 +147,7 @@ export default function ProviderDashboardScreen() {
                   </View>
                   <View style={styles.orderInfo}>
                     <Text style={styles.orderNum}>#{order.orderNumber}</Text>
-                    <Text style={styles.orderTotal}>{order.total?.toFixed(2)} ر.س</Text>
+                    <Text style={styles.orderTotal}>{order.total?.toFixed(2)} درهم</Text>
                   </View>
                 </View>
               ))}

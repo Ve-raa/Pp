@@ -147,7 +147,7 @@ export default function OrderDetailScreen() {
           <Text style={styles.sectionTitle}>الخدمات المطلوبة</Text>
           {order.items?.map((item) => (
             <View key={item.id} style={styles.orderItem}>
-              <Text style={styles.itemPrice}>{item.price} ر.س × {item.quantity}</Text>
+              <Text style={styles.itemPrice}>{item.price} درهم × {item.quantity}</Text>
               <Text style={styles.itemName}>{item.service?.title}</Text>
             </View>
           ))}
@@ -157,17 +157,17 @@ export default function OrderDetailScreen() {
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>ملخص الفاتورة</Text>
           <View style={styles.row}>
-            <Text style={styles.val}>{order.subtotal?.toFixed(2)} ر.س</Text>
+            <Text style={styles.val}>{order.subtotal?.toFixed(2)} درهم</Text>
             <Text style={styles.lbl}>المجموع الفرعي</Text>
           </View>
           {order.discount && order.discount > 0 ? (
             <View style={styles.row}>
-              <Text style={[styles.val, { color: Colors.success }]}>-{order.discount?.toFixed(2)} ر.س</Text>
+              <Text style={[styles.val, { color: Colors.success }]}>-{order.discount?.toFixed(2)} درهم</Text>
               <Text style={styles.lbl}>الخصم</Text>
             </View>
           ) : null}
           <View style={[styles.row, styles.totalRow]}>
-            <Text style={styles.totalVal}>{order.total?.toFixed(2)} ر.س</Text>
+            <Text style={styles.totalVal}>{order.total?.toFixed(2)} درهم</Text>
             <Text style={styles.totalLbl}>الإجمالي</Text>
           </View>
         </View>

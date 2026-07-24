@@ -31,7 +31,7 @@ export default function LoyaltyScreen() {
     mutationFn: () => redeemLoyaltyPoints(loyalty?.points || 0),
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ['loyalty'] });
-      Alert.alert('تم الاسترداد ✅', `تم استرداد نقاطك بخصم ${res.discount} ر.س`);
+      Alert.alert('تم الاسترداد ✅', `تم استرداد نقاطك بخصم ${res.discount} درهم`);
     },
     onError: () => Alert.alert('خطأ', 'تعذّر استرداد النقاط'),
   });

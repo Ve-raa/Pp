@@ -37,7 +37,7 @@ export default function WalletScreen() {
       if (res.paymentUrl) {
         Alert.alert('إعادة توجيه', 'ستُنقل إلى صفحة الدفع لإتمام عملية الشحن');
       } else {
-        Alert.alert('تم الشحن ✅', `تم شحن ${topupAmount} ر.س بنجاح`);
+        Alert.alert('تم الشحن ✅', `تم شحن ${topupAmount} درهم بنجاح`);
       }
     } catch {
       Alert.alert('خطأ', 'تعذّر إتمام عملية الشحن');
@@ -63,7 +63,7 @@ export default function WalletScreen() {
             <View style={styles.balanceCard}>
               <Text style={styles.balanceLabel}>الرصيد الحالي</Text>
               <Text style={styles.balanceAmount}>{wallet?.balance?.toFixed(2) || '0.00'}</Text>
-              <Text style={styles.balanceCurrency}>{wallet?.currency || 'ر.س'}</Text>
+              <Text style={styles.balanceCurrency}>{wallet?.currency || 'درهم'}</Text>
             </View>
 
             {/* Top-up */}
@@ -77,13 +77,13 @@ export default function WalletScreen() {
                     style={[styles.amountChip, topupAmount === a && styles.amountChipActive]}
                   >
                     <Text style={[styles.amountText, topupAmount === a && styles.amountTextActive]}>
-                      {a} ر.س
+                      {a} درهم
                     </Text>
                   </TouchableOpacity>
                 ))}
               </View>
               <Button
-                title={topupAmount ? `شحن ${topupAmount} ر.س` : 'اختر المبلغ'}
+                title={topupAmount ? `شحن ${topupAmount} درهم` : 'اختر المبلغ'}
                 onPress={handleTopUp}
                 loading={topupLoading}
                 disabled={!topupAmount}
@@ -103,12 +103,12 @@ export default function WalletScreen() {
             <View>
               <Text style={styles.txDate}>{new Date(item.createdAt).toLocaleDateString('ar-SA')}</Text>
               {item.balance !== undefined && (
-                <Text style={styles.txBalance}>الرصيد: {item.balance?.toFixed(2)} ر.س</Text>
+                <Text style={styles.txBalance}>الرصيد: {item.balance?.toFixed(2)} درهم</Text>
               )}
             </View>
             <View style={styles.txRight}>
               <Text style={[styles.txAmount, { color: item.type === 'credit' ? Colors.success : Colors.error }]}>
-                {item.type === 'credit' ? '+' : '-'}{item.amount?.toFixed(2)} ر.س
+                {item.type === 'credit' ? '+' : '-'}{item.amount?.toFixed(2)} درهم
               </Text>
               <Text style={styles.txDesc}>{item.description}</Text>
               <View style={[styles.txIcon, { backgroundColor: item.type === 'credit' ? Colors.successLight : Colors.errorLight }]}>

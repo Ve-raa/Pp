@@ -116,7 +116,7 @@ export default function OrdersScreen() {
                 </Text>
                 <View style={styles.orderFooter}>
                   <Ionicons name="chevron-back" size={16} color={Colors.purpleMid} />
-                  <Text style={styles.totalText}>{order.total?.toFixed(2)} ر.س</Text>
+                  <Text style={styles.totalText}>{order.total?.toFixed(2)} درهم</Text>
                 </View>
               </View>
             </TouchableOpacity>
