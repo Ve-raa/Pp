@@ -6,7 +6,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { WebView } from 'react-native-webview';
-import { hapticNotification } from '../../src/utils/haptics';
+import { hapticNotification } from '../src/utils/haptics';
 import { Colors } from '../src/constants/colors';
 import { Button } from '../src/components/common/Button';
 import { Header } from '../src/components/common/Header';
