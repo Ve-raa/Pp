@@ -48,6 +48,21 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "6712708d-a95f-494a-a801-33b3ed541013"
+      }
+    },
+    "owner": "veraapp",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/6712708d-a95f-494a-a801-33b3ed541013"
     }
   }
 }
