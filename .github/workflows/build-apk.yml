@@ -35,21 +35,21 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      # ── 4. Upgrade npm to avoid "Exit handler never called" bug ───────────
-      - name: Upgrade npm
-        run: npm install -g npm@10 --quiet
+      # ── 4. Enable Corepack and setup Yarn ─────────────────────────────────
+      - name: Enable Corepack + Yarn
+        run: |
+          corepack enable
+          yarn set version classic
 
-      # ── 5. Install JS dependencies ─────────────────────────────────────────
+      # ── 5. Install JS dependencies via Yarn (avoids npm Exit-handler bug) ─
       - name: Install dependencies
-        run: npm install --legacy-peer-deps --no-audit --no-fund
-        env:
-          NODE_OPTIONS: '--max-old-space-size=4096'
+        run: yarn install --non-interactive --ignore-optional 2>&1
 
       # ── 6. Verify expo binary ──────────────────────────────────────────────
       - name: Verify expo binary
         run: |
-          ls node_modules/.bin/expo && echo "✅ expo OK"
           node_modules/.bin/expo --version
+          echo "✅ Expo OK"
 
       # ── 7. Expo Prebuild → generate android/ native project ───────────────
       - name: Expo Prebuild (Android)
@@ -57,7 +57,6 @@ jobs:
         env:
           EXPO_NO_TELEMETRY: '1'
           EXPO_PUBLIC_API_URL: 'https://veraapp.app'
-          NODE_OPTIONS: '--max-old-space-size=4096'
 
       # ── 8. Accept Android SDK licences ────────────────────────────────────
       - name: Accept Android SDK licences
@@ -81,7 +80,7 @@ jobs:
           APK=$(find android/app/build/outputs/apk -name "*.apk" | head -1)
           if [ -z "$APK" ]; then echo "❌ APK not found!"; exit 1; fi
           echo "path=$APK" >> $GITHUB_OUTPUT
-          echo "✅ APK: $APK"
+          echo "✅ APK: $APK ($(du -sh $APK | cut -f1))"
 
       # ── 12. Upload artifact (30-day retention) ─────────────────────────────
       - name: Upload APK artifact
@@ -91,7 +90,7 @@ jobs:
           path: ${{ steps.locate.outputs.path }}
           retention-days: 30
 
-      # ── 13. Create GitHub Release ──────────────────────────────────────────
+      # ── 13. Create GitHub Release with direct APK download link ───────────
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
