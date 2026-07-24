@@ -21,8 +21,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#6366f1"
       },
-      "package": "app.vera.mobile",
-      "kotlinVersion": "1.9.25"
+      "package": "app.vera.mobile"
     },
     "web": {
       "bundler": "metro",
@@ -37,7 +36,15 @@
           "configureAndroidBackup": true
         }
       ],
-      "expo-asset"
+      "expo-asset",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "kotlinVersion": "1.9.25"
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
