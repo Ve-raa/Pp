@@ -22,8 +22,13 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Enable Corepack + Yarn
+        run: |
+          corepack enable
+          yarn set version classic
+
       - name: Install dependencies
-        run: npm install --legacy-peer-deps
+        run: yarn install --non-interactive --ignore-optional 2>&1
 
       - name: Publish OTA update
         uses: expo/expo-github-action@v8
@@ -34,3 +39,4 @@ jobs:
 
       - name: Push update to production channel
         run: eas update --channel production --message "${{ github.event.head_commit.message }}" --auto
+
