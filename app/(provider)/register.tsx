@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as Haptics from 'expo-haptics';
+import { hapticNotification } from '../../src/utils/haptics';
 import { Input } from '../../src/components/common/Input';
 import { Button } from '../../src/components/common/Button';
 import { Header } from '../../src/components/common/Header';
@@ -48,7 +48,7 @@ export default function ProviderRegisterScreen() {
         city: form.city.trim(),
       });
       await loginAsProvider(res.token, res.user as any);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      hapticNotification();
       router.replace('/(provider)/dashboard');
     } catch (err: any) {
       Alert.alert('خطأ', err?.response?.data?.message || 'حدث خطأ أثناء التسجيل');

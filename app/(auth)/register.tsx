@@ -4,7 +4,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as Haptics from 'expo-haptics';
+import { hapticNotification } from '../../src/utils/haptics';
 import { Input } from '../../src/components/common/Input';
 import { Button } from '../../src/components/common/Button';
 import { Header } from '../../src/components/common/Header';
@@ -46,10 +46,10 @@ export default function RegisterScreen() {
         phone: form.phone.trim() || undefined,
       });
       await loginAsBuyer(res.token, res.user as any);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      hapticNotification();
       router.replace('/(buyer)');
     } catch (err: any) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      hapticNotification('error');
       const msg = err?.response?.data?.message || 'حدث خطأ أثناء إنشاء الحساب';
       Alert.alert('خطأ', msg);
     } finally {

@@ -7,7 +7,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import * as Haptics from 'expo-haptics';
+import { hapticImpact, hapticNotification } from '../../src/utils/haptics';
 import { Colors } from '../../src/constants/colors';
 import { Button } from '../../src/components/common/Button';
 import { Skeleton } from '../../src/components/common/LoadingState';
@@ -43,7 +43,7 @@ export default function ServiceDetailScreen() {
     mutationFn: () => wishlisted ? removeFromWishlist(id!) : addToWishlist(id!),
     onSuccess: () => {
       setWishlisted((v) => !v);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      hapticImpact();
     },
   });
 
@@ -57,7 +57,7 @@ export default function ServiceDetailScreen() {
       return;
     }
     addItem(service, quantity);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    hapticNotification();
     Alert.alert('تمت الإضافة ✅', 'تمت إضافة الخدمة إلى سلتك', [
       { text: 'متابعة التسوق' },
       { text: 'عرض السلة', onPress: () => router.push('/(buyer)/cart') },

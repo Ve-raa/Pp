@@ -12,7 +12,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
+import { hapticNotification } from '../../src/utils/haptics';
 import { Input } from '../../src/components/common/Input';
 import { Button } from '../../src/components/common/Button';
 import { Colors } from '../../src/constants/colors';
@@ -45,10 +45,10 @@ export default function LoginScreen() {
     try {
       const res = await buyerLogin({ email: email.trim(), password });
       await loginAsBuyer(res.token, res.user as any);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      hapticNotification();
       router.replace('/(buyer)');
     } catch (err: any) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      hapticNotification('error');
       const msg = err?.response?.data?.message || 'البريد الإلكتروني أو كلمة المرور غير صحيحة';
       Alert.alert('خطأ في تسجيل الدخول', msg);
     } finally {
