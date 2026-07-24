@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Alert,
 } from 'react-native';
@@ -12,15 +12,13 @@ import { getProviderEarnings, requestPayout } from '../../src/api/provider';
 
 export default function ProviderEarningsScreen() {
   const insets = useSafeAreaInsets();
-  const [payoutAmount, setPayoutAmount] = useState<number | null>(null);
-
   const { data: earnings, isLoading } = useQuery({
     queryKey: ['provider-earnings'],
     queryFn: getProviderEarnings,
   });
 
   const payoutMutation = useMutation({
-    mutationFn: () => requestPayout(payoutAmount || 0),
+    mutationFn: (amount: number) => requestPayout(amount),
     onSuccess: () => Alert.alert('تم الطلب ✅', 'تم إرسال طلب السحب. سيتم المعالجة خلال 3-5 أيام عمل.'),
     onError: () => Alert.alert('خطأ', 'تعذّر إرسال طلب السحب'),
   });
@@ -30,7 +28,7 @@ export default function ProviderEarningsScreen() {
     if (available <= 0) return Alert.alert('تنبيه', 'لا يوجد رصيد متاح للسحب');
     Alert.alert('طلب سحب', `هل تريد سحب ${available.toFixed(2)} درهم؟`, [
       { text: 'إلغاء', style: 'cancel' },
-      { text: 'سحب', onPress: () => { setPayoutAmount(available); requestPayout(available).then(() => Alert.alert('تم الطلب ✅', 'تم إرسال طلب السحب. سيتم المعالجة خلال 3-5 أيام عمل.')).catch(() => Alert.alert('خطأ', 'تعذّر إرسال طلب السحب')); } },
+      { text: 'سحب', onPress: () => payoutMutation.mutate(available) },
     ]);
   };
 
