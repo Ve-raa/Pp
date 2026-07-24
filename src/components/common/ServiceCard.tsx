@@ -8,7 +8,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
+import { hapticImpact } from '../../utils/haptics';
 import { Colors } from '../../constants/colors';
 import type { Service } from '../../types';
 
@@ -33,7 +33,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
   style,
 }) => {
   const handleWishlist = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    hapticImpact();
     onWishlistPress?.();
   };
 

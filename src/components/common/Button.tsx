@@ -8,7 +8,7 @@ import {
   TextStyle,
   View,
 } from 'react-native';
-import * as Haptics from 'expo-haptics';
+import { hapticImpact } from '../../utils/haptics';
 import { Colors } from '../../constants/colors';
 
 interface ButtonProps {
@@ -40,7 +40,7 @@ export const Button: React.FC<ButtonProps> = ({
 }) => {
   const handlePress = () => {
     if (disabled || loading) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    hapticImpact();
     onPress();
   };
 

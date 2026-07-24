@@ -6,7 +6,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
+import { hapticImpact, hapticNotification } from '../../src/utils/haptics';
 import { Colors } from '../../src/constants/colors';
 import { Button } from '../../src/components/common/Button';
 import { EmptyState } from '../../src/components/common/EmptyState';
@@ -30,7 +30,7 @@ export default function CartScreen() {
       const res = await applyPromoCode(promoInput.trim());
       if (res.isValid) {
         setPromo(res.code, res.discount, res.type);
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        hapticNotification();
       } else {
         Alert.alert('كود غير صالح', res.message || 'الكود المدخل غير صحيح أو منتهي الصلاحية');
       }
@@ -49,7 +49,7 @@ export default function CartScreen() {
         style: 'destructive',
         onPress: () => {
           removeItem(id);
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          hapticImpact();
         },
       },
     ]);

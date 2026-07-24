@@ -6,7 +6,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { WebView } from 'react-native-webview';
-import * as Haptics from 'expo-haptics';
+import { hapticNotification } from '../../src/utils/haptics';
 import { Colors } from '../src/constants/colors';
 import { Button } from '../src/components/common/Button';
 import { Header } from '../src/components/common/Header';
@@ -60,7 +60,7 @@ export default function CheckoutScreen() {
 
       // Wallet or direct payment
       clearCart();
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      hapticNotification();
       router.replace(`/order/${order.id}`);
     } catch (err: any) {
       const msg = err?.response?.data?.message || 'حدث خطأ أثناء تقديم الطلب. حاول مجدداً.';

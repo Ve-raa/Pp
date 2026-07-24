@@ -13,7 +13,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Haptics from 'expo-haptics';
+import { hapticImpact } from '../src/utils/haptics';
 import { Colors } from '../src/constants/colors';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -53,7 +53,7 @@ export default function OnboardingScreen() {
   const [current, setCurrent] = useState(0);
 
   const handleNext = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    hapticImpact();
     if (current < slides.length - 1) {
       flatRef.current?.scrollToIndex({ index: current + 1 });
       setCurrent(current + 1);
