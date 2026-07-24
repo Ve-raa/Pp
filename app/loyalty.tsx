@@ -120,12 +120,12 @@ export default function LoyaltyScreen() {
                   <Text style={styles.txDate}>{new Date(tx.createdAt).toLocaleDateString('ar-SA')}</Text>
                 </View>
                 <View style={styles.txRight}>
-                  <Text style={[styles.txPoints, { color: tx.type === 'earn' ? Colors.success : Colors.error }]}>
-                    {tx.type === 'earn' ? '+' : '-'}{tx.points} نقطة
+                  <Text style={[styles.txPoints, { color: (tx.type === 'earn' || tx.type === 'earned') ? Colors.success : Colors.error }]}>
+                    {(tx.type === 'earn' || tx.type === 'earned') ? '+' : '-'}{tx.points} نقطة
                   </Text>
                   <Text style={styles.txDesc}>{tx.description}</Text>
-                  <View style={[styles.txIcon, { backgroundColor: tx.type === 'earn' ? Colors.successLight : Colors.errorLight }]}>
-                    <Ionicons name={tx.type === 'earn' ? 'add' : 'remove'} size={16} color={tx.type === 'earn' ? Colors.success : Colors.error} />
+                  <View style={[styles.txIcon, { backgroundColor: (tx.type === 'earn' || tx.type === 'earned') ? Colors.successLight : Colors.errorLight }]}>
+                    <Ionicons name={(tx.type === 'earn' || tx.type === 'earned') ? 'add' : 'remove'} size={16} color={(tx.type === 'earn' || tx.type === 'earned') ? Colors.success : Colors.error} />
                   </View>
                 </View>
               </View>

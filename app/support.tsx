@@ -117,10 +117,10 @@ export default function SupportScreen() {
                 color={Colors.purpleMid}
               />
               <View style={styles.faqContent}>
+                <Text style={styles.faqQuestion}>{faq.q}</Text>
                 {expandedFaq === i && (
                   <Text style={styles.faqAnswer}>{faq.a}</Text>
                 )}
-                <Text style={styles.faqQuestion}>{faq.q}</Text>
               </View>
             </TouchableOpacity>
           ))}

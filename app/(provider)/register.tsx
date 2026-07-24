@@ -25,7 +25,8 @@ export default function ProviderRegisterScreen() {
   const validate = () => {
     const e: Record<string, string> = {};
     if (!form.name.trim()) e.name = 'الاسم مطلوب';
-    if (!form.email.trim() || !/\S+@\S+\.\S+/.test(form.email)) e.email = 'بريد إلكتروني غير صحيح';
+    if (!form.email.trim()) e.email = 'البريد الإلكتروني مطلوب';
+    else if (!/\S+@\S+\.\S+/.test(form.email)) e.email = 'بريد إلكتروني غير صحيح';
     if (form.password.length < 8) e.password = 'يجب أن تكون 8 أحرف على الأقل';
     if (!form.phone.trim()) e.phone = 'رقم الجوال مطلوب';
     if (!form.businessName.trim()) e.businessName = 'اسم النشاط مطلوب';

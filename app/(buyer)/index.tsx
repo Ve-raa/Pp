@@ -145,7 +145,7 @@ export default function HomeScreen() {
       {/* Services Tabs */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push('/(buyer)/search')}>
             <Text style={styles.seeAll}>عرض الكل</Text>
           </TouchableOpacity>
           <Text style={styles.sectionTitle}>الخدمات</Text>

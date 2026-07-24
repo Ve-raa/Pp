@@ -30,7 +30,7 @@ export default function ProviderEarningsScreen() {
     if (available <= 0) return Alert.alert('تنبيه', 'لا يوجد رصيد متاح للسحب');
     Alert.alert('طلب سحب', `هل تريد سحب ${available.toFixed(2)} درهم؟`, [
       { text: 'إلغاء', style: 'cancel' },
-      { text: 'سحب', onPress: () => { setPayoutAmount(available); payoutMutation.mutate(); } },
+      { text: 'سحب', onPress: () => { setPayoutAmount(available); requestPayout(available).then(() => Alert.alert('تم الطلب ✅', 'تم إرسال طلب السحب. سيتم المعالجة خلال 3-5 أيام عمل.')).catch(() => Alert.alert('خطأ', 'تعذّر إرسال طلب السحب')); } },
     ]);
   };
 

@@ -101,7 +101,7 @@ export default function ProviderLoginScreen() {
           />
         </View>
 
-        <TouchableOpacity onPress={() => router.back()} style={styles.backTobuyer}>
+        <TouchableOpacity onPress={() => router.replace('/(auth)/login')} style={styles.backTobuyer}>
           <Ionicons name="person-outline" size={16} color={Colors.purpleMid} />
           <Text style={styles.backTobuyerText}>الدخول كمشتري</Text>
         </TouchableOpacity>

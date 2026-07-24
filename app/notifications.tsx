@@ -74,11 +74,11 @@ export default function NotificationsScreen() {
             >
               {!item.isRead && <View style={styles.unreadDot} />}
               <View style={styles.notifContent}>
+                <Text style={styles.notifTitle}>{item.title}</Text>
+                <Text style={styles.notifBody} numberOfLines={2}>{item.body}</Text>
                 <Text style={styles.notifDate} numberOfLines={1}>
                   {new Date(item.createdAt).toLocaleDateString('ar-SA')}
                 </Text>
-                <Text style={styles.notifBody} numberOfLines={2}>{item.body}</Text>
-                <Text style={styles.notifTitle}>{item.title}</Text>
               </View>
               <View style={[styles.notifIcon, { backgroundColor: `${Colors.primary}15` }]}>
                 <Ionicons name={getIcon(item.type)} size={22} color={Colors.primary} />

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal, TextInput,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -145,12 +145,17 @@ export default function CheckoutScreen() {
         {/* Notes */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>ملاحظات (اختياري)</Text>
-          <TouchableOpacity
+          <TextInput
             style={styles.notesInput}
-            onPress={() => {}}
-          >
-            <Text style={styles.notesPlaceholder}>أضف ملاحظات للمزود...</Text>
-          </TouchableOpacity>
+            placeholder="أضف ملاحظات للمزود..."
+            placeholderTextColor={Colors.textLight}
+            value={notes}
+            onChangeText={setNotes}
+            multiline
+            numberOfLines={3}
+            textAlign="right"
+            textAlignVertical="top"
+          />
         </View>
 
         {/* Security note */}
@@ -216,8 +221,7 @@ const styles = StyleSheet.create({
   payDesc: { fontFamily: 'Cairo_400Regular', fontSize: 11, color: Colors.textMuted, marginTop: 2 },
   payIconCircle: { width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.lightPurple, alignItems: 'center', justifyContent: 'center' },
   payIconCircleActive: { backgroundColor: `${Colors.primary}15` },
-  notesInput: { backgroundColor: Colors.lightPurple, borderRadius: 12, padding: 14, minHeight: 70, justifyContent: 'flex-start' },
-  notesPlaceholder: { fontFamily: 'Cairo_400Regular', fontSize: 14, color: Colors.textLight, textAlign: 'right' },
+  notesInput: { backgroundColor: Colors.lightPurple, borderRadius: 12, padding: 14, minHeight: 80, fontFamily: 'Cairo_400Regular', fontSize: 14, color: Colors.textPrimary, borderWidth: 1, borderColor: Colors.border },
   securityNote: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, margin: 16, marginTop: 12 },
   securityText: { fontFamily: 'Cairo_400Regular', fontSize: 12, color: Colors.textMuted },
   bottomBar: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 16, backgroundColor: Colors.cardBg, borderTopWidth: 1, borderTopColor: Colors.border, shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 8 },
