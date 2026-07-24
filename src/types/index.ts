@@ -268,13 +268,15 @@ export interface PaymentInitRequest {
   orderId: string;
   method: PaymentMethod;
   returnUrl?: string;
+  cancelUrl?: string;
 }
 
 export interface PaymentInitResponse {
   paymentUrl?: string;
   clientSecret?: string;
   sessionId?: string;
-  status: string;
+  paymentId?: string;
+  status?: string;
 }
 
 // ─── Provider Types ───────────────────────────────────────────────────────────

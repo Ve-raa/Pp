@@ -36,7 +36,8 @@
           "configureAndroidBackup": true
         }
       ],
-      "expo-asset"
+      "expo-asset",
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true

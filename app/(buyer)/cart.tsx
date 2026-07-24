@@ -11,6 +11,7 @@ import { Colors } from '../../src/constants/colors';
 import { Button } from '../../src/components/common/Button';
 import { EmptyState } from '../../src/components/common/EmptyState';
 import { useCartStore } from '../../src/store/cartStore';
+import { applyPromoCode } from '../../src/api/cart';
 
 export default function CartScreen() {
   const router = useRouter();
@@ -26,7 +27,6 @@ export default function CartScreen() {
     if (!promoInput.trim()) return;
     setPromoLoading(true);
     try {
-      const { applyPromoCode } = await import('../../src/api/cart');
       const res = await applyPromoCode(promoInput.trim());
       if (res.isValid) {
         setPromo(res.code, res.discount, res.type);
