@@ -21,7 +21,8 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#6366f1"
       },
-      "package": "app.vera.mobile"
+      "package": "app.vera.mobile",
+      "kotlinVersion": "1.9.25"
     },
     "web": {
       "bundler": "metro",
