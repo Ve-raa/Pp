@@ -172,9 +172,9 @@ export default function ServiceDetailScreen() {
           {/* Price */}
           <View style={styles.priceRow}>
             {service.originalPrice && (
-              <Text style={styles.originalPrice}>{service.originalPrice}د.إ</Text>
+              <Text style={styles.originalPrice}>{service.originalPrice} د.إ</Text>
             )}
-            <Text style={styles.price}>{service.price}د.إ</Text>
+            <Text style={styles.price}>{service.price} د.إ</Text>
           </View>
 
           {/* Provider */}
@@ -281,7 +281,7 @@ export default function ServiceDetailScreen() {
           </TouchableOpacity>
         </View>
         <Button
-          title={`أضف إلى السلة · ${(service.price * quantity).toFixed(2)}د.إ`}
+          title={`أضف إلى السلة · ${(service.price * quantity).toFixed(2)} د.إ`}
           onPress={handleAddToCart}
           size="md"
           style={styles.addBtn}
