@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   ViewStyle,
   TextStyle,
+  StyleProp,
   View,
 } from 'react-native';
 import { hapticImpact } from '../../utils/haptics';
@@ -18,8 +19,8 @@ interface ButtonProps {
   size?: 'sm' | 'md' | 'lg';
   loading?: boolean;
   disabled?: boolean;
-  style?: ViewStyle;
-  textStyle?: TextStyle;
+  style?: StyleProp<ViewStyle>;
+  textStyle?: StyleProp<TextStyle>;
   icon?: React.ReactNode;
   iconPosition?: 'left' | 'right';
   fullWidth?: boolean;
@@ -47,11 +48,11 @@ export const Button: React.FC<ButtonProps> = ({
   const containerStyle = [
     styles.base,
     styles[variant],
-    styles[`size_${size}` as keyof typeof styles],
+    styles[`size_${size}` as keyof typeof styles] as ViewStyle,
     fullWidth && styles.fullWidth,
     (disabled || loading) && styles.disabled,
     style,
-  ];
+  ] as StyleProp<ViewStyle>;
 
   const labelStyle = [
     styles.text,

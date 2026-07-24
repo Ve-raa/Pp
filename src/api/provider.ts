@@ -1,4 +1,4 @@
-import { providerGet, providerPost, providerPut } from './client';
+import { providerClient, providerGet, providerPost } from './client';
 import type {
   ProviderDashboard,
   ProviderEarnings,
@@ -41,7 +41,6 @@ export async function createProviderService(data: Partial<Service>): Promise<Ser
 }
 
 export async function updateProviderService(id: string, data: Partial<Service>): Promise<Service> {
-  const { providerClient } = await import('./client');
   const res = await providerClient.patch<Service>(`/api/provider/services/${id}`, data);
   return res.data;
 }
@@ -61,7 +60,6 @@ export async function getProviderOrders(params?: {
 
 export async function updateOrderStatus(orderId: string, status: string): Promise<{ message: string }> {
   // PATCH /api/provider/orders/:orderId with { status }
-  const { providerClient } = await import('./client');
   const res = await providerClient.patch<{ message: string }>(
     `/api/provider/orders/${orderId}`,
     { status }
@@ -93,7 +91,6 @@ export async function getProviderProfile(): Promise<ProviderUser> {
 }
 
 export async function updateProviderProfile(data: Partial<ProviderUser>): Promise<ProviderUser> {
-  const { providerClient } = await import('./client');
   const res = await providerClient.patch<ProviderUser>('/api/provider/profile', data);
   return res.data;
 }

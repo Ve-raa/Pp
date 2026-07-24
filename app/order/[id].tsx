@@ -46,8 +46,10 @@ export default function OrderDetailScreen() {
     queryKey: ['order', id],
     queryFn: () => getOrderById(id!),
     enabled: !!id,
-    refetchInterval: (data) =>
-      data?.status === 'in_progress' || data?.status === 'confirmed' ? 30000 : false,
+    refetchInterval: (query) => {
+      const status = query.state.data?.status;
+      return status === 'in_progress' || status === 'confirmed' ? 30000 : false;
+    },
   });
 
   const cancelMutation = useMutation({

@@ -212,6 +212,7 @@ export interface PaymentInitResponse {
   paymentUrl?: string;
   paymentId?: string;
   clientSecret?: string;
+  status?: string;
 }
 
 // ─── Wallet Types ─────────────────────────────────────────────────────────────
@@ -229,6 +230,7 @@ export interface WalletTransaction {
   description: string;
   orderId?: string;
   status: 'completed' | 'pending' | 'failed';
+  balance?: number;
   createdAt: string;
 }
 
@@ -244,7 +246,7 @@ export interface LoyaltyTier {
 
 export interface LoyaltyHistoryItem {
   id: string;
-  type: 'earned' | 'redeemed' | 'expired';
+  type: 'earned' | 'earn' | 'redeemed' | 'expired';
   points: number;
   description: string;
   orderId?: string;
@@ -254,6 +256,7 @@ export interface LoyaltyHistoryItem {
 export interface LoyaltyInfo {
   points: number;
   tier: string;
+  tierName?: string;
   tierColor?: string;
   tierIcon?: string;
   nextTier?: string;
@@ -263,6 +266,8 @@ export interface LoyaltyInfo {
   history?: LoyaltyHistoryItem[];
   tiers?: LoyaltyTier[];
 }
+
+export type LoyaltyTransaction = LoyaltyHistoryItem;
 
 // ─── Notification Types ───────────────────────────────────────────────────────
 export interface Notification {

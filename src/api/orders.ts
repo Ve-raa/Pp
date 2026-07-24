@@ -64,6 +64,7 @@ export async function initPayment(data: PaymentInitRequest): Promise<PaymentInit
     paymentUrl: res?.url ?? res?.checkoutUrl ?? res?.paymentUrl,
     paymentId: res?.sessionId ?? res?.paymentId ?? res?.id,
     clientSecret: res?.clientSecret,
+    status: res?.status ?? 'pending',
   };
 }
 
