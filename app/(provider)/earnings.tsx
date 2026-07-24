@@ -26,7 +26,7 @@ export default function ProviderEarningsScreen() {
   const handlePayout = () => {
     const available = earnings?.pendingPayout || 0;
     if (available <= 0) return Alert.alert('تنبيه', 'لا يوجد رصيد متاح للسحب');
-    Alert.alert('طلب سحب', `هل تريد سحب ${available.toFixed(2)}د.إ؟`, [
+    Alert.alert('طلب سحب', `هل تريد سحب ${available.toFixed(2)} د.إ؟`, [
       { text: 'إلغاء', style: 'cancel' },
       { text: 'سحب', onPress: () => payoutMutation.mutate(available) },
     ]);
@@ -42,7 +42,7 @@ export default function ProviderEarningsScreen() {
         {/* Total Card */}
         <View style={styles.totalCard}>
           <Text style={styles.totalLabel}>إجمالي الأرباح</Text>
-          <Text style={styles.totalAmount}>{earnings?.totalEarnings?.toFixed(2) || '0.00'}د.إ</Text>
+          <Text style={styles.totalAmount}>{earnings?.totalEarnings?.toFixed(2) || '0.00'} د.إ</Text>
         </View>
 
         {/* Stats Row */}
@@ -67,7 +67,7 @@ export default function ProviderEarningsScreen() {
         <View style={styles.payoutCard}>
           <View style={styles.payoutRow}>
             <Text style={styles.payoutLabel}>متاح للسحب</Text>
-            <Text style={styles.payoutAmount}>{earnings?.pendingPayout?.toFixed(2) || '0.00'}د.إ</Text>
+            <Text style={styles.payoutAmount}>{earnings?.pendingPayout?.toFixed(2) || '0.00'} د.إ</Text>
           </View>
           <Button
             title="طلب سحب"
@@ -99,7 +99,7 @@ export default function ProviderEarningsScreen() {
                 </View>
                 <View style={styles.txRight}>
                   <Text style={[styles.txAmount, { color: tx.type === 'earning' ? Colors.success : Colors.error }]}>
-                    {tx.type === 'earning' ? '+' : '-'}{tx.amount?.toFixed(2)}د.إ
+                    {tx.type === 'earning' ? '+' : '-'}{tx.amount?.toFixed(2)} د.إ
                   </Text>
                   <Text style={styles.txDesc}>{tx.description}</Text>
                   <View style={[styles.txIcon, { backgroundColor: tx.type === 'earning' ? Colors.successLight : Colors.errorLight }]}>
