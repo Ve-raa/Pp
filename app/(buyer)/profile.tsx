@@ -101,7 +101,7 @@ export default function ProfileScreen() {
           <View style={styles.menuCard}>
             <MenuItem icon="person-outline" label="الملف الشخصي" color={Colors.primary} onPress={() => {}} />
             <View style={styles.menuDivider} />
-            <MenuItem icon="wallet-outline" label="المحفظة" color={Colors.success} onPress={() => router.push('/wallet')} value={`${buyerUser?.walletBalance?.toFixed(2) || '0.00'} درهم`} />
+            <MenuItem icon="wallet-outline" label="المحفظة" color={Colors.success} onPress={() => router.push('/wallet')} value={`${buyerUser?.walletBalance?.toFixed(2) || '0.00'}د.إ`} />
             <View style={styles.menuDivider} />
             <MenuItem icon="gift-outline" label="برنامج الولاء" color={Colors.accent} onPress={() => router.push('/loyalty')} value={`${buyerUser?.loyaltyPoints || 0} نقطة`} />
             <View style={styles.menuDivider} />

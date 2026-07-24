@@ -101,7 +101,7 @@ export default function CartScreen() {
             />
             <View style={styles.itemInfo}>
               <Text style={styles.itemName} numberOfLines={2}>{item.service.title}</Text>
-              <Text style={styles.itemPrice}>{item.price} درهم</Text>
+              <Text style={styles.itemPrice}>{item.price}د.إ</Text>
               <View style={styles.qtyRow}>
                 <TouchableOpacity
                   onPress={() => updateQuantity(item.serviceId, item.quantity + 1)}
@@ -137,7 +137,7 @@ export default function CartScreen() {
                     <Ionicons name="close-circle" size={20} color={Colors.error} />
                   </TouchableOpacity>
                   <Text style={styles.promoAppliedText}>
-                    ✅ تم تطبيق "{promoCode}" — خصم {promoDiscount}{promoType === 'percentage' ? '%' : ' درهم'}
+                    ✅ تم تطبيق "{promoCode}" — خصم {promoDiscount}{promoType === 'percentage' ? '%' : 'د.إ'}
                   </Text>
                 </View>
               ) : (
@@ -166,25 +166,25 @@ export default function CartScreen() {
             <View style={styles.summaryCard}>
               <Text style={styles.summaryTitle}>ملخص الطلب</Text>
               <View style={styles.summaryRow}>
-                <Text style={styles.summaryValue}>{s.toFixed(2)} درهم</Text>
+                <Text style={styles.summaryValue}>{s.toFixed(2)}د.إ</Text>
                 <Text style={styles.summaryLabel}>المجموع الفرعي</Text>
               </View>
               {discount > 0 && (
                 <View style={styles.summaryRow}>
                   <Text style={[styles.summaryValue, { color: Colors.success }]}>
-                    -{discount.toFixed(2)} درهم
+                    -{discount.toFixed(2)}د.إ
                   </Text>
                   <Text style={styles.summaryLabel}>الخصم</Text>
                 </View>
               )}
               <View style={[styles.summaryRow, styles.summaryTotal]}>
-                <Text style={styles.totalValue}>{t.toFixed(2)} درهم</Text>
+                <Text style={styles.totalValue}>{t.toFixed(2)}د.إ</Text>
                 <Text style={styles.totalLabel}>الإجمالي</Text>
               </View>
             </View>
 
             <Button
-              title={`الدفع — ${t.toFixed(2)} درهم`}
+              title={`الدفع — ${t.toFixed(2)}د.إ`}
               onPress={() => router.push('/checkout')}
               fullWidth
               size="lg"

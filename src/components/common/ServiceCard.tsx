@@ -63,9 +63,9 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
             <Text style={styles.ratingCount}>({service.reviewsCount || 0})</Text>
           </View>
           <View style={styles.priceRow}>
-            <Text style={styles.price}>{service.price} درهم</Text>
+            <Text style={styles.price}>{service.price}د.إ</Text>
             {service.originalPrice && (
-              <Text style={styles.originalPrice}>{service.originalPrice} درهم</Text>
+              <Text style={styles.originalPrice}>{service.originalPrice}د.إ</Text>
             )}
           </View>
         </View>
@@ -108,7 +108,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
         <View style={styles.featuredContent}>
           <Text style={styles.featuredTitle} numberOfLines={2}>{service.title}</Text>
           <View style={styles.featuredBottom}>
-            <Text style={styles.featuredPrice}>{service.price} درهم</Text>
+            <Text style={styles.featuredPrice}>{service.price}د.إ</Text>
             <View style={styles.featuredRating}>
               <Ionicons name="star" size={11} color="#F59E0B" />
               <Text style={styles.featuredRatingText}>{service.rating?.toFixed(1) || '0.0'}</Text>
@@ -153,9 +153,9 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
           <Text style={styles.rating}>{service.rating?.toFixed(1) || '0.0'}</Text>
         </View>
         <View style={styles.priceRow}>
-          <Text style={styles.price}>{service.price} درهم</Text>
+          <Text style={styles.price}>{service.price}د.إ</Text>
           {service.originalPrice && (
-            <Text style={styles.originalPrice}>{service.originalPrice} درهم</Text>
+            <Text style={styles.originalPrice}>{service.originalPrice}د.إ</Text>
           )}
         </View>
       </View>

@@ -132,13 +132,13 @@ export default function CheckoutScreen() {
           <Text style={styles.cardTitle}>ملخص الطلب</Text>
           {items.map((item) => (
             <View key={item.id} style={styles.itemRow}>
-              <Text style={styles.itemTotal}>{(item.price * item.quantity).toFixed(2)} درهم</Text>
+              <Text style={styles.itemTotal}>{(item.price * item.quantity).toFixed(2)}د.إ</Text>
               <Text style={styles.itemName} numberOfLines={1}>{item.service.title} × {item.quantity}</Text>
             </View>
           ))}
           <View style={styles.divider} />
           <View style={styles.totalRow}>
-            <Text style={styles.totalAmt}>{orderTotal.toFixed(2)} درهم</Text>
+            <Text style={styles.totalAmt}>{orderTotal.toFixed(2)}د.إ</Text>
             <Text style={styles.totalLabel}>الإجمالي</Text>
           </View>
         </View>
@@ -197,7 +197,7 @@ export default function CheckoutScreen() {
       {/* Place Order CTA */}
       <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 12 }]}>
         <Button
-          title={`تأكيد الطلب — ${orderTotal.toFixed(2)} درهم`}
+          title={`تأكيد الطلب — ${orderTotal.toFixed(2)}د.إ`}
           onPress={handlePlaceOrder}
           loading={loading}
           fullWidth

@@ -137,7 +137,7 @@ export default function ProviderOrdersScreen() {
                     <Text style={styles.updateBtnText}>تحديث الحالة</Text>
                   </TouchableOpacity>
                 )}
-                <Text style={styles.total}>{order.total?.toFixed(2)} درهم</Text>
+                <Text style={styles.total}>{order.total?.toFixed(2)}د.إ</Text>
               </View>
             </View>
           )}
