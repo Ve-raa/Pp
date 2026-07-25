@@ -186,8 +186,7 @@ export default function CartScreen() {
             <Button
               title={`الدفع — ${t.toFixed(2)} د.إ`}
               onPress={() => router.push('/checkout')}
-              fullWidth
-              size="lg"
+              size="md"
               style={styles.checkoutBtn}
             />
             <View style={{ height: 100 }} />
@@ -277,5 +276,5 @@ const styles = StyleSheet.create({
   summaryTotal: { borderTopWidth: 1, borderTopColor: Colors.border, paddingTop: 12, marginTop: 4 },
   totalLabel: { fontFamily: 'Cairo_700Bold', fontSize: 16, color: Colors.textPrimary },
   totalValue: { fontFamily: 'Cairo_700Bold', fontSize: 18, color: Colors.primary },
-  checkoutBtn: { marginBottom: 0 },
+  checkoutBtn: { alignSelf: 'flex-end', minWidth: 180, marginBottom: 0 },
 });
