@@ -71,9 +71,10 @@ export async function rateOrder(
 }
 
 // ─── Payment ──────────────────────────────────────────────────────────────────
-// Stripe, Tabby, Tamara → all handled by the Replit API server.
-// On native: use EXPO_PUBLIC_REPLIT_API_URL.
-// On web: use relative path — the preview proxy routes to the Replit API server.
+// Stripe is handled by the production veraapp.app API, which creates the
+// Checkout Session without requiring a prior createOrder call.
+// On native, buyerClient's base URL is https://veraapp.app.
+// On web, the relative path uses the preview proxy.
 
 export async function initPayment(data: PaymentInitRequest): Promise<PaymentInitResponse> {
   const payload: Record<string, unknown> = {
@@ -86,12 +87,14 @@ export async function initPayment(data: PaymentInitRequest): Promise<PaymentInit
   };
 
   const methodMap: Record<string, string> = {
-    stripe: '/api/payments/stripe',
     tabby: '/api/payments/tabby',
     tamara: '/api/payments/tamara',
   };
 
-  const endpoint = replitUrl(methodMap[data.method] ?? '/api/payments/stripe');
+  const endpoint =
+    data.method === 'stripe'
+      ? '/api/payments/stripe'
+      : replitUrl(methodMap[data.method] ?? '/api/payments/stripe');
   const res = await buyerPost<any>(endpoint, payload);
 
   if (data.method === 'stripe' && res?.error) {

@@ -22,6 +22,10 @@ const PAYMENT_OPTIONS = [
   { id: 'wallet' as PaymentMethod, label: 'المحفظة', icon: 'wallet-outline', desc: 'الدفع من رصيدك' },
 ];
 
+function createLocalPaymentOrderId(): string {
+  return `local-${Date.now()}`;
+}
+
 export default function CheckoutScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -40,24 +44,30 @@ export default function CheckoutScreen() {
     setLoading(true);
     let createdOrderId: string | null = null;
     try {
-      // Create order
-      const order = await createOrder({
-        items: items.map((i) => ({ serviceId: i.serviceId, quantity: i.quantity, notes: i.notes })),
-        paymentMethod: selectedPayment,
-        promoCode: promoCode || undefined,
-        notes,
-      });
-      createdOrderId = order.id;
+      // Stripe creates the payment session directly on veraapp.app. It does
+      // not need a database order first, so use a local correlation id.
+      const paymentOrderId =
+        selectedPayment === 'stripe'
+          ? createLocalPaymentOrderId()
+          : (await createOrder({
+              items: items.map((i) => ({ serviceId: i.serviceId, quantity: i.quantity, notes: i.notes })),
+              paymentMethod: selectedPayment,
+              promoCode: promoCode || undefined,
+              notes,
+            })).id;
+      if (selectedPayment !== 'stripe') {
+        createdOrderId = paymentOrderId;
+      }
 
       // Init payment
       if (selectedPayment !== 'wallet') {
         const payment = await initPayment({
-          orderId: order.id,
+          orderId: paymentOrderId,
           method: selectedPayment,
           amount: orderTotal,
           buyerId: buyerUser?.id ?? '',
-          returnUrl: `https://veraapp.app/payment/return?orderId=${order.id}`,
-          cancelUrl: `https://veraapp.app/payment/cancel?orderId=${order.id}`,
+          returnUrl: `https://veraapp.app/payment/return?orderId=${paymentOrderId}`,
+          cancelUrl: `https://veraapp.app/payment/cancel?orderId=${paymentOrderId}`,
         });
 
         // Only show demo error for non-Stripe methods (Stripe is real)
@@ -66,7 +76,7 @@ export default function CheckoutScreen() {
         }
 
         if (payment.paymentUrl) {
-          setPendingOrderId(order.id);
+          setPendingOrderId(paymentOrderId);
           setPaymentUrl(payment.paymentUrl);
           setPaymentModal(true);
           return;
@@ -78,7 +88,7 @@ export default function CheckoutScreen() {
       // Wallet or direct payment
       clearCart();
       hapticNotification();
-      router.replace(`/order/${order.id}`);
+      router.replace(`/order/${paymentOrderId}`);
     } catch (err: any) {
       if (createdOrderId) {
         await cancelOrder(createdOrderId, 'payment_initialization_failed').catch(() => undefined);
@@ -117,7 +127,13 @@ export default function CheckoutScreen() {
       clearCart();
       hapticNotification();
       if (pendingOrderId) {
-        router.replace(('/order/' + pendingOrderId) as any);
+        // Stripe uses a local correlation id because no order was created
+        // before checkout. The order detail endpoint cannot resolve it.
+        if (pendingOrderId.startsWith('local-')) {
+          router.replace('/(buyer)/orders');
+        } else {
+          router.replace(('/order/' + pendingOrderId) as any);
+        }
       } else {
         router.replace('/(buyer)/orders');
       }
