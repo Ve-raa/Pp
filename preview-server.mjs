@@ -4,7 +4,27 @@ import { spawn } from 'node:child_process';
 
 const publicPort = Number(process.env.PORT || 3000);
 const expoPort = publicPort === 3000 ? 3001 : publicPort + 1;
-const apiOrigin = new URL('https://veraapp.app');
+
+// Main veraapp.app backend (auth, categories, services, cart, etc.)
+const veraOrigin = new URL('https://veraapp.app');
+
+// Replit API server handles: orders + payments (Stripe/Tabby/Tamara)
+// Port is passed via REPLIT_API_PORT (default 5000)
+const replitApiPort = Number(process.env.REPLIT_API_PORT || 5000);
+const replitApiOrigin = new URL(`http://127.0.0.1:${replitApiPort}`);
+
+// Paths that must be routed to the local Replit API server
+const REPLIT_API_PREFIXES = [
+  '/api/buyer/orders',
+  '/api/payments/stripe',
+  '/api/payments/tabby',
+  '/api/payments/tamara',
+  '/api/healthz',
+];
+
+function isReplitApiPath(pathname) {
+  return REPLIT_API_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(prefix + '/') || pathname.startsWith(prefix + '?'));
+}
 
 const expo = spawn(
   'npx',
@@ -62,20 +82,30 @@ function proxyRequest(req, res, target) {
 
 const server = http.createServer((req, res) => {
   const requestUrl = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
+  const { pathname, search } = requestUrl;
 
-  if (requestUrl.pathname === '/api' || requestUrl.pathname.startsWith('/api/')) {
-    const target = new URL(requestUrl.pathname + requestUrl.search, apiOrigin);
-    proxyRequest(req, res, target);
+  if (pathname === '/api' || pathname.startsWith('/api/')) {
+    if (isReplitApiPath(pathname)) {
+      // Route to local Replit API server
+      const target = new URL(pathname + search, replitApiOrigin);
+      proxyRequest(req, res, target);
+    } else {
+      // Route to external veraapp.app
+      const target = new URL(pathname + search, veraOrigin);
+      proxyRequest(req, res, target);
+    }
     return;
   }
 
-  const target = new URL(requestUrl.pathname + requestUrl.search, `http://127.0.0.1:${expoPort}`);
+  // All other requests → Expo web dev server
+  const target = new URL(pathname + search, `http://127.0.0.1:${expoPort}`);
   proxyRequest(req, res, target);
 });
 
 server.listen(publicPort, '0.0.0.0', () => {
   console.log(`Preview proxy listening on http://0.0.0.0:${publicPort}`);
-  console.log(`API requests are proxied to ${apiOrigin.origin}`);
+  console.log(`Orders/Payments API → http://127.0.0.1:${replitApiPort}`);
+  console.log(`Other API calls     → ${veraOrigin.origin}`);
 });
 
 function shutdown() {

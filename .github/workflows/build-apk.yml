@@ -57,6 +57,8 @@ jobs:
         env:
           EXPO_NO_TELEMETRY: '1'
           EXPO_PUBLIC_API_URL: 'https://veraapp.app'
+          # Replit API server URL — handles orders and payments (Stripe/Tabby/Tamara)
+          EXPO_PUBLIC_REPLIT_API_URL: ${{ secrets.REPLIT_API_URL }}
 
       # ── 8. Accept Android SDK licences ────────────────────────────────────
       - name: Accept Android SDK licences
