@@ -281,7 +281,7 @@ export default function ServiceDetailScreen() {
           </TouchableOpacity>
         </View>
         <Button
-          title={`أضف إلى السلة · ${(service.price * quantity).toFixed(2)} د.إ`}
+          title="أضف للسلة"
           onPress={handleAddToCart}
           size="sm"
           style={styles.addBtn}
@@ -399,5 +399,5 @@ const styles = StyleSheet.create({
   },
   qtyBtn: { width: 28, height: 28, borderRadius: 8, backgroundColor: Colors.cardBg, alignItems: 'center', justifyContent: 'center' },
   qtyText: { fontFamily: 'Cairo_700Bold', fontSize: 15, color: Colors.textPrimary, minWidth: 22, textAlign: 'center' },
-  addBtn: { flex: 1 },
+  addBtn: { flex: 0, minWidth: 118 },
 });
