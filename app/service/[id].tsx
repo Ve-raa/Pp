@@ -283,7 +283,7 @@ export default function ServiceDetailScreen() {
         <Button
           title={`أضف إلى السلة · ${(service.price * quantity).toFixed(2)} د.إ`}
           onPress={handleAddToCart}
-          size="md"
+          size="sm"
           style={styles.addBtn}
         />
       </View>

@@ -112,4 +112,24 @@ router.get("/payments/stripe/config", (_req: Request, res: Response) => {
   res.json({ publishableKey });
 });
 
+
+// ─── POST /api/payments/tabby ─────────────────────────────────────────────────
+// Tabby is not yet configured — return a demo response so the app shows a
+// user-friendly 'not activated' message instead of a raw 405 error.
+router.post("/payments/tabby", (_req: Request, res: Response) => {
+  res.json({
+    demo: true,
+    message: "خدمة Tabby غير مفعّلة حالياً. يرجى التواصل مع الدعم لتفعيل الدفع بالتقسيط.",
+  });
+});
+
+// ─── POST /api/payments/tamara ────────────────────────────────────────────────
+// Tamara is not yet configured — return a demo response.
+router.post("/payments/tamara", (_req: Request, res: Response) => {
+  res.json({
+    demo: true,
+    message: "خدمة Tamara غير مفعّلة حالياً. يرجى التواصل مع الدعم لتفعيل الدفع بالتقسيط.",
+  });
+});
+
 export default router;

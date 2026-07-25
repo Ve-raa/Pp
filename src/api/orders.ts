@@ -46,9 +46,9 @@ export async function rateOrder(orderId: string, data: {
 // ─── Payment ──────────────────────────────────────────────────────────────────
 // For Stripe we call our own Replit API server (which holds the secret key securely).
 // For Tabby / Tamara we still route through the main veraapp backend.
-const STRIPE_PAYMENT_URL =
-  process.env.EXPO_PUBLIC_STRIPE_API_URL ||
-  (process.env.EXPO_PUBLIC_API_URL ? process.env.EXPO_PUBLIC_API_URL + '/api/payments/stripe' : null);
+// NOTE: Do NOT use EXPO_PUBLIC_API_URL here — that points to veraapp.app, not the Replit API server.
+// On web, the relative path '/api/payments/stripe' is routed to the Replit API server automatically.
+const STRIPE_PAYMENT_URL = process.env.EXPO_PUBLIC_STRIPE_API_URL ?? null;
 
 export async function initPayment(data: PaymentInitRequest): Promise<PaymentInitResponse> {
   const payload: Record<string, unknown> = {
