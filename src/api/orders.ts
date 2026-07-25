@@ -1,22 +1,5 @@
-import { Platform } from 'react-native';
 import { buyerGet, buyerPost } from './client';
 import type { Order, PaymentInitRequest, PaymentInitResponse } from '../types';
-
-// ─── Replit API Server URL ─────────────────────────────────────────────────────
-// On native, orders/payments go to the Replit API server directly.
-// On web, the preview proxy routes /api/* to the correct server.
-const REPLIT_API_URL = (process.env.EXPO_PUBLIC_REPLIT_API_URL ?? '').replace(/\/$/, '');
-
-/**
- * Build an absolute URL for the Replit API server when on native,
- * or a relative path when on web (proxy handles it).
- */
-function replitUrl(path: string): string {
-  if (Platform.OS !== 'web' && REPLIT_API_URL) {
-    return `${REPLIT_API_URL}${path}`;
-  }
-  return path;
-}
 
 // ─── Orders ───────────────────────────────────────────────────────────────────
 
@@ -25,7 +8,7 @@ export async function getOrders(params?: {
   limit?: number;
   status?: string;
 }): Promise<{ orders: Order[]; total: number; page: number; totalPages: number }> {
-  const data = await buyerGet<any>(replitUrl('/api/buyer/orders'), params as Record<string, unknown>);
+  const data = await buyerGet<any>('/api/buyer/orders', params as Record<string, unknown>);
   return {
     orders: data?.orders ?? (Array.isArray(data) ? data : []),
     total: data?.total ?? 0,
@@ -35,7 +18,7 @@ export async function getOrders(params?: {
 }
 
 export async function getOrderById(id: string): Promise<Order> {
-  const data = await buyerGet<any>(replitUrl(`/api/buyer/orders/${id}`));
+  const data = await buyerGet<any>(`/api/buyer/orders/${id}`);
   return data?.order ?? data;
 }
 
@@ -47,34 +30,29 @@ export async function createOrder(data: {
   address?: string;
   notes?: string;
 }): Promise<Order> {
-  const res = await buyerPost<any>(replitUrl('/api/buyer/orders'), data);
+  const res = await buyerPost<any>('/api/buyer/orders', data);
   return res?.order ?? res;
 }
 
 export async function cancelOrder(orderId: string, reason?: string): Promise<{ message: string }> {
-  return buyerPost(replitUrl(`/api/buyer/orders/${orderId}/cancel`), { reason });
+  return buyerPost(`/api/buyer/orders/${orderId}/cancel`, { reason });
 }
 
 export async function updateOrderPayment(
   orderId: string,
   data: { paymentId?: string; paymentStatus?: string },
 ): Promise<{ message: string }> {
-  return buyerPost(replitUrl(`/api/buyer/orders/${orderId}/payment`), data);
+  return buyerPost(`/api/buyer/orders/${orderId}/payment`, data);
 }
 
 export async function rateOrder(
   orderId: string,
   data: { rating: number; review?: string },
 ): Promise<{ message: string }> {
-  // Rating endpoint lives on the main veraapp backend
   return buyerPost(`/api/buyer/orders/${orderId}/review`, data);
 }
 
 // ─── Payment ──────────────────────────────────────────────────────────────────
-// Stripe is handled by the production veraapp.app API, which creates the
-// Checkout Session without requiring a prior createOrder call.
-// On native, buyerClient's base URL is https://veraapp.app.
-// On web, the relative path uses the preview proxy.
 
 export async function initPayment(data: PaymentInitRequest): Promise<PaymentInitResponse> {
   const payload: Record<string, unknown> = {
@@ -94,7 +72,8 @@ export async function initPayment(data: PaymentInitRequest): Promise<PaymentInit
   const endpoint =
     data.method === 'stripe'
       ? '/api/payments/stripe'
-      : replitUrl(methodMap[data.method] ?? '/api/payments/stripe');
+      : (methodMap[data.method] ?? '/api/payments/stripe');
+
   const res = await buyerPost<any>(endpoint, payload);
 
   if (data.method === 'stripe' && res?.error) {
@@ -112,5 +91,5 @@ export async function initPayment(data: PaymentInitRequest): Promise<PaymentInit
 }
 
 export async function verifyPayment(paymentId: string): Promise<{ status: string; orderId?: string }> {
-  return buyerPost(replitUrl('/api/payments/stripe/session/' + paymentId), {});
+  return buyerPost('/api/payments/stripe/session/' + paymentId, {});
 }

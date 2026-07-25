@@ -5,7 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useFonts, Cairo_400Regular, Cairo_600SemiBold, Cairo_700Bold } from '@expo-google-fonts/cairo';
 import * as SplashScreen from 'expo-splash-screen';
-import { I18nManager, StyleSheet, Platform } from 'react-native';
+import { I18nManager, StyleSheet, Platform, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useAuthStore } from '../src/store/authStore';
 import { setUnauthorizedHandler } from '../src/api/client';
@@ -41,16 +41,27 @@ export default function RootLayout() {
   });
 
   // Register the 401 unauthorized handler once the router is mounted.
-  // When any API call returns 401, clear the session and redirect to login.
+  // When any API call returns 401, clear the session and show an alert before redirecting.
   useEffect(() => {
     isNavigationReady.current = true;
     setUnauthorizedHandler(() => {
       logoutAll().then(() => {
-        try {
-          router.replace('/(auth)/login');
-        } catch {
-          // Router may not be mounted yet; index.tsx will redirect on next render
-        }
+        Alert.alert(
+          'انتهت الجلسة',
+          'يرجى تسجيل الدخول مجدداً للمتابعة',
+          [
+            {
+              text: 'تسجيل الدخول',
+              onPress: () => {
+                try {
+                  router.replace('/(auth)/login');
+                } catch {
+                  // Router may not be mounted yet
+                }
+              },
+            },
+          ],
+        );
       });
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -28,7 +28,7 @@ export default function ProviderServicesScreen() {
     mutationFn: () => createProviderService({
       title: form.title,
       description: form.description,
-      price: parseFloat(form.price),
+      price: parseFloat(form.price) || 0,
       deliveryTime: form.deliveryTime,
       images: [],
     }),
@@ -38,8 +38,36 @@ export default function ProviderServicesScreen() {
       setForm({ title: '', description: '', price: '', deliveryTime: '' });
       Alert.alert('تمت الإضافة ✅', 'تم إضافة الخدمة بنجاح');
     },
-    onError: () => Alert.alert('خطأ', 'تعذّر إضافة الخدمة'),
+    onError: (error: any) => {
+      const status = error?.response?.status;
+      if (status === 401) {
+        // Session expired — _onUnauthorized will handle logout + alert
+        setAddModal(false);
+      } else if (status === 422 || status === 400) {
+        Alert.alert('بيانات غير صحيحة', 'تحقق من جميع الحقول وحاول مجدداً');
+      } else if (status === 500) {
+        Alert.alert('خطأ في الخادم', 'حدث خطأ في الخادم، يرجى المحاولة لاحقاً');
+      } else {
+        Alert.alert('خطأ', 'تعذّر إضافة الخدمة، تحقق من الاتصال وحاول مجدداً');
+      }
+    },
   });
+
+  const handleSubmit = () => {
+    const trimmedTitle = form.title.trim();
+    const priceNum = parseFloat(form.price);
+
+    if (!trimmedTitle) {
+      Alert.alert('تنبيه', 'يرجى إدخال عنوان الخدمة');
+      return;
+    }
+    if (!form.price || isNaN(priceNum) || priceNum <= 0) {
+      Alert.alert('تنبيه', 'يرجى إدخال سعر صحيح أكبر من صفر');
+      return;
+    }
+
+    createMutation.mutate();
+  };
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -74,7 +102,7 @@ export default function ProviderServicesScreen() {
                 <View style={[styles.statusDot, { backgroundColor: item.isAvailable ? Colors.success : Colors.error }]} />
                 <View style={styles.serviceInfo}>
                   <Text style={styles.serviceName}>{item.title}</Text>
-                  <Text style={styles.servicePrice}>{item.price}د.إ</Text>
+                  <Text style={styles.servicePrice}>{item.price} د.إ</Text>
                 </View>
               </View>
               {item.description && (
@@ -97,7 +125,12 @@ export default function ProviderServicesScreen() {
       )}
 
       {/* Add Service Modal */}
-      <Modal visible={addModal} animationType="slide" transparent>
+      <Modal
+        visible={addModal}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setAddModal(false)}
+      >
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <View style={styles.modalHeader}>
@@ -106,11 +139,48 @@ export default function ProviderServicesScreen() {
               </TouchableOpacity>
               <Text style={styles.modalTitle}>إضافة خدمة جديدة</Text>
             </View>
-            <TextInput style={styles.input} placeholder="عنوان الخدمة *" placeholderTextColor={Colors.textLight} value={form.title} onChangeText={(v) => set('title', v)} textAlign="right" />
-            <TextInput style={[styles.input, styles.textArea]} placeholder="وصف الخدمة" placeholderTextColor={Colors.textLight} value={form.description} onChangeText={(v) => set('description', v)} multiline numberOfLines={3} textAlign="right" textAlignVertical="top" />
-            <TextInput style={styles.input} placeholder="السعر (د.إ) *" placeholderTextColor={Colors.textLight} value={form.price} onChangeText={(v) => set('price', v)} keyboardType="numeric" textAlign="right" />
-            <TextInput style={styles.input} placeholder="مدة التسليم (مثال: 1-3 أيام)" placeholderTextColor={Colors.textLight} value={form.deliveryTime} onChangeText={(v) => set('deliveryTime', v)} textAlign="right" />
-            <Button title="إضافة الخدمة" onPress={() => createMutation.mutate()} loading={createMutation.isPending} disabled={!form.title || !form.price} fullWidth />
+            <TextInput
+              style={styles.input}
+              placeholder="عنوان الخدمة *"
+              placeholderTextColor={Colors.textLight}
+              value={form.title}
+              onChangeText={(v) => set('title', v)}
+              textAlign="right"
+            />
+            <TextInput
+              style={[styles.input, styles.textArea]}
+              placeholder="وصف الخدمة"
+              placeholderTextColor={Colors.textLight}
+              value={form.description}
+              onChangeText={(v) => set('description', v)}
+              multiline
+              numberOfLines={3}
+              textAlign="right"
+              textAlignVertical="top"
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="السعر (د.إ) *"
+              placeholderTextColor={Colors.textLight}
+              value={form.price}
+              onChangeText={(v) => set('price', v)}
+              keyboardType="numeric"
+              textAlign="right"
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="مدة التسليم (مثال: 1-3 أيام)"
+              placeholderTextColor={Colors.textLight}
+              value={form.deliveryTime}
+              onChangeText={(v) => set('deliveryTime', v)}
+              textAlign="right"
+            />
+            <Button
+              title="إضافة الخدمة"
+              onPress={handleSubmit}
+              loading={createMutation.isPending}
+              fullWidth
+            />
           </View>
         </View>
       </Modal>

@@ -1,12 +1,7 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
 import * as SecureStore from 'expo-secure-store';
-import { Platform } from 'react-native';
 
-// The Replit web preview uses a same-origin server-side proxy for `/api`.
-// Native builds continue to call the production API directly.
-const BASE_URL = Platform.OS === 'web'
-  ? ''
-  : (process.env.EXPO_PUBLIC_API_URL || 'https://veraapp.app');
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'https://veraapp.app';
 
 // ─── Token Storage Keys ───────────────────────────────────────────────────────
 export const BUYER_TOKEN_KEY = 'vera_buyer_token';
