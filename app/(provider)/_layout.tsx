@@ -8,6 +8,7 @@ export default function ProviderLayout() {
       <Stack.Screen name="register" />
       <Stack.Screen name="dashboard" />
       <Stack.Screen name="services" />
+      <Stack.Screen name="add-service" />
       <Stack.Screen name="orders" />
       <Stack.Screen name="earnings" />
       <Stack.Screen name="profile" />
