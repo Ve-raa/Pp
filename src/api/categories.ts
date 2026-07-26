@@ -48,6 +48,7 @@ function mapService(raw: any): Service {
         }
       : undefined,
     badge: raw.badge ?? undefined,
+    subcategory: raw.subcategory ?? undefined,
   } as Service;
 }
 

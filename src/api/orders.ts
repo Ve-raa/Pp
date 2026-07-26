@@ -63,6 +63,9 @@ export async function initPayment(data: PaymentInitRequest): Promise<PaymentInit
     cancelUrl: data.cancelUrl ?? 'https://veraapp.app/payment/cancel',
     currency: 'aed',
   };
+  if (data.address) {
+    payload.shippingAddress = data.address;
+  }
 
   const methodMap: Record<string, string> = {
     tabby: '/api/payments/tabby',

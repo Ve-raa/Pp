@@ -9,7 +9,8 @@ function fullUrl(path?: string | null): string | undefined {
 }
 
 function mapService(raw: any) {
-  const imageUrl = fullUrl(raw.image_url ?? raw.image);
+  // /api/search returns providerName, image (not image_url) and nested provider_* fields
+  const imageUrl = fullUrl(raw.image ?? raw.image_url ?? null);
   const gallery: string[] = Array.isArray(raw.gallery) && raw.gallery.length
     ? raw.gallery.map((g: string) => fullUrl(g) ?? g)
     : imageUrl ? [imageUrl] : [];
@@ -25,13 +26,13 @@ function mapService(raw: any) {
     reviewsCount: raw.review_count ?? raw.reviewCount ?? 0,
     isAvailable: raw.is_active ?? true,
     isFeatured: raw.is_featured ?? false,
-    provider: raw.provider_name
+    provider: (raw.provider_name ?? raw.providerName)
       ? {
-          id: String(raw.provider_id ?? ''),
-          name: raw.provider_name,
-          avatar: fullUrl(raw.provider_avatar),
-          isVerified: raw.provider_verified ?? false,
-          city: raw.provider_city,
+          id: String(raw.provider_id ?? raw.providerId ?? ''),
+          name: raw.provider_name ?? raw.providerName,
+          avatar: fullUrl(raw.provider_avatar ?? raw.providerAvatar),
+          isVerified: raw.provider_verified ?? raw.providerVerified ?? false,
+          city: raw.provider_city ?? raw.providerCity,
         }
       : undefined,
     badge: raw.badge ?? undefined,
@@ -56,11 +57,14 @@ export async function search(
 ): Promise<SearchResult> {
   if (!query.trim()) return empty();
   try {
-    const data = await publicGet<any>('/api/public/services', {
+    const data = await publicGet<any>('/api/search', {
       q: query,
       ...(params as Record<string, unknown>),
     });
-    const services = (data?.services ?? data ?? []).map(mapService);
+    // /api/search returns { results: [...] }; fall back to services/array shapes too
+    const rawList: any[] =
+      data?.results ?? data?.services ?? (Array.isArray(data) ? data : []);
+    const services = rawList.map(mapService);
     return {
       services,
       providers: [],

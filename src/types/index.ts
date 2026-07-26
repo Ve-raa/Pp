@@ -97,6 +97,30 @@ export interface Service {
   ordersCount?: number;
   /** Promotional badge label (e.g. 'جديد', 'الأكثر طلباً') */
   badge?: string;
+  /** Subcategory text as returned by /api/public/services */
+  subcategory?: string;
+}
+
+// ─── Payment Types ────────────────────────────────────────────────────────────
+export type PaymentMethod = 'stripe' | 'tabby' | 'tamara' | 'wallet';
+
+export interface PaymentInitRequest {
+  orderId: string;
+  method: PaymentMethod;
+  amount: number;
+  buyerId: string;
+  address?: string;
+  returnUrl?: string;
+  cancelUrl?: string;
+}
+
+export interface PaymentInitResponse {
+  paymentUrl?: string;
+  paymentId?: string;
+  clientSecret?: string;
+  status: string;
+  demo?: boolean;
+  message?: string;
 }
 
 export interface ServiceProvider {

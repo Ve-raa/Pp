@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal, TextInput,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, TextInput,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { WebView } from 'react-native-webview';
+import * as WebBrowser from 'expo-web-browser';
 import { hapticNotification } from '../src/utils/haptics';
 import { Colors } from '../src/constants/colors';
 import { Button } from '../src/components/common/Button';
@@ -33,10 +33,8 @@ export default function CheckoutScreen() {
   const { buyerUser } = useAuthStore();
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethod>('stripe');
   const [notes, setNotes] = useState('');
+  const [address, setAddress] = useState('');
   const [loading, setLoading] = useState(false);
-  const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
-  const [paymentModal, setPaymentModal] = useState(false);
-  const [pendingOrderId, setPendingOrderId] = useState<string | null>(null);
   const orderTotal = total();
 
   const handlePlaceOrder = async () => {
@@ -53,21 +51,22 @@ export default function CheckoutScreen() {
               items: items.map((i) => ({ serviceId: i.serviceId, quantity: i.quantity, notes: i.notes })),
               paymentMethod: selectedPayment,
               promoCode: promoCode || undefined,
+              address: address.trim() || undefined,
               notes,
             })).id;
       if (selectedPayment !== 'stripe') {
         createdOrderId = paymentOrderId;
       }
 
-      // Init payment
       if (selectedPayment !== 'wallet') {
         const payment = await initPayment({
           orderId: paymentOrderId,
           method: selectedPayment,
           amount: orderTotal,
           buyerId: buyerUser?.id ?? '',
-          returnUrl: `https://veraapp.app/payment/return?orderId=${paymentOrderId}`,
-          cancelUrl: `https://veraapp.app/payment/cancel?orderId=${paymentOrderId}`,
+          address: address.trim() || undefined,
+          returnUrl: `vera://payment/return?orderId=${paymentOrderId}`,
+          cancelUrl: `vera://payment/cancel?orderId=${paymentOrderId}`,
         });
 
         // Only show demo error for non-Stripe methods (Stripe is real)
@@ -76,16 +75,47 @@ export default function CheckoutScreen() {
         }
 
         if (payment.paymentUrl) {
-          setPendingOrderId(paymentOrderId);
-          setPaymentUrl(payment.paymentUrl);
-          setPaymentModal(true);
+          // Open payment gateway in system browser; wait for vera:// deep-link redirect
+          const result = await WebBrowser.openAuthSessionAsync(
+            payment.paymentUrl,
+            'vera://payment',
+          );
+
+          const redirectedUrl =
+            result.type === 'success' ? result.url : '';
+          const wasSuccess =
+            result.type === 'success' &&
+            redirectedUrl.includes('vera://payment/return');
+          const wasCancelled =
+            result.type === 'cancel' ||
+            (result.type === 'success' &&
+              redirectedUrl.includes('vera://payment/cancel'));
+
+          if (wasCancelled) {
+            if (createdOrderId) {
+              await cancelOrder(createdOrderId, 'payment_cancelled').catch(() => undefined);
+            }
+            return; // Stay on checkout screen
+          }
+
+          if (wasSuccess) {
+            clearCart();
+            hapticNotification();
+            router.replace(`/order/${paymentOrderId}`);
+            return;
+          }
+
+          // Browser dismissed without a recognised redirect (user closed manually)
+          if (createdOrderId) {
+            await cancelOrder(createdOrderId, 'payment_dismissed').catch(() => undefined);
+          }
           return;
         }
 
         throw new Error('لم تُرجع بوابة الدفع رابط دفع صالحا. حاول مرة أخرى.');
       }
 
-      // Wallet or direct payment
+      // Wallet payment — no external browser needed
       clearCart();
       hapticNotification();
       router.replace(`/order/${paymentOrderId}`);
@@ -104,54 +134,24 @@ export default function CheckoutScreen() {
     }
   };
 
-  const handleWebViewNav = (navState: { url: string }) => {
-    const url = navState.url;
-    const isCancelUrl =
-      url.includes('vera://payment/cancel') ||
-      url.includes('/payment/cancel') ||
-      url.includes('payment-cancelled') ||
-      url.includes('payment-canceled');
-    const isReturnUrl =
-      url.includes('vera://') ||
-      url.includes('/payment/return') ||
-      url.includes('/payment/success') ||
-      url.includes('order-confirmed');
-    if (isCancelUrl) {
-      setPaymentModal(false);
-      setPaymentUrl(null);
-      return;
-    }
-    if (isReturnUrl && !url.includes('vera://payment/cancel')) {
-      setPaymentModal(false);
-      setPaymentUrl(null);
-      clearCart();
-      hapticNotification();
-      if (pendingOrderId) {
-        // Stripe uses a local correlation id because no order was created
-        // before checkout. The order detail endpoint cannot resolve it.
-        if (pendingOrderId.startsWith('local-')) {
-          router.replace('/(buyer)/orders');
-        } else {
-          router.replace(('/order/' + pendingOrderId) as any);
-        }
-      } else {
-        router.replace('/(buyer)/orders');
-      }
-    }
-  };
-
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <Header title="إتمام الطلب" showBack />
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
-
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 120 }}
+      >
         {/* Order Summary */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>ملخص الطلب</Text>
           {items.map((item) => (
             <View key={item.id} style={styles.itemRow}>
-              <Text style={styles.itemTotal}>{(item.price * item.quantity).toFixed(2)} د.إ</Text>
-              <Text style={styles.itemName} numberOfLines={1}>{item.service.title} × {item.quantity}</Text>
+              <Text style={styles.itemTotal}>
+                {(item.price * item.quantity).toFixed(2)} د.إ
+              </Text>
+              <Text style={styles.itemName} numberOfLines={1}>
+                {item.quantity > 1 ? `${item.quantity}× ` : ''}{item.service.title}
+              </Text>
             </View>
           ))}
           <View style={styles.divider} />
@@ -161,32 +161,51 @@ export default function CheckoutScreen() {
           </View>
         </View>
 
-        {/* Payment Method */}
+        {/* Shipping Address */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>عنوان التوصيل (اختياري)</Text>
+          <TextInput
+            style={styles.notesInput}
+            value={address}
+            onChangeText={setAddress}
+            placeholder="أدخل عنوانك الكامل..."
+            placeholderTextColor={Colors.textLight}
+            multiline
+            textAlign="right"
+          />
+        </View>
+
+        {/* Payment Methods */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>طريقة الدفع</Text>
-          {PAYMENT_OPTIONS.map((opt) => (
-            <TouchableOpacity
-              key={opt.id}
-              onPress={() => setSelectedPayment(opt.id)}
-              style={[styles.payOption, selectedPayment === opt.id && styles.payOptionActive]}
-              activeOpacity={0.8}
-            >
-              <View style={[styles.radio, selectedPayment === opt.id && styles.radioActive]}>
-                {selectedPayment === opt.id && (
-                  <View style={styles.radioDot} />
-                )}
-              </View>
-              <View style={styles.payInfo}>
-                <Text style={[styles.payLabel, selectedPayment === opt.id && styles.payLabelActive]}>
-                  {opt.label}
-                </Text>
-                <Text style={styles.payDesc}>{opt.desc}</Text>
-              </View>
-              <View style={[styles.payIconCircle, selectedPayment === opt.id && styles.payIconCircleActive]}>
-                <Ionicons name={opt.icon as any} size={22} color={selectedPayment === opt.id ? Colors.primary : Colors.purpleMid} />
-              </View>
-            </TouchableOpacity>
-          ))}
+          {PAYMENT_OPTIONS.map((opt) => {
+            const active = selectedPayment === opt.id;
+            return (
+              <TouchableOpacity
+                key={opt.id}
+                style={[styles.payOption, active && styles.payOptionActive]}
+                onPress={() => setSelectedPayment(opt.id)}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.radio, active && styles.radioActive]}>
+                  {active && <View style={styles.radioDot} />}
+                </View>
+                <View style={styles.payInfo}>
+                  <Text style={[styles.payLabel, active && styles.payLabelActive]}>
+                    {opt.label}
+                  </Text>
+                  <Text style={styles.payDesc}>{opt.desc}</Text>
+                </View>
+                <View style={[styles.payIconCircle, active && styles.payIconCircleActive]}>
+                  <Ionicons
+                    name={opt.icon as any}
+                    size={20}
+                    color={active ? Colors.primary : Colors.purpleMid}
+                  />
+                </View>
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
         {/* Notes */}
@@ -194,54 +213,32 @@ export default function CheckoutScreen() {
           <Text style={styles.cardTitle}>ملاحظات (اختياري)</Text>
           <TextInput
             style={styles.notesInput}
-            placeholder="أضف ملاحظات للمزود..."
-            placeholderTextColor={Colors.textLight}
             value={notes}
             onChangeText={setNotes}
+            placeholder="أي تعليمات خاصة للمزود..."
+            placeholderTextColor={Colors.textLight}
             multiline
-            numberOfLines={3}
             textAlign="right"
-            textAlignVertical="top"
           />
         </View>
 
         {/* Security note */}
         <View style={styles.securityNote}>
-          <Ionicons name="shield-checkmark" size={16} color={Colors.success} />
-          <Text style={styles.securityText}>جميع المدفوعات مشفرة وآمنة بالكامل</Text>
+          <Ionicons name="lock-closed-outline" size={14} color={Colors.textMuted} />
+          <Text style={styles.securityText}>الدفع آمن ومشفر بالكامل</Text>
         </View>
       </ScrollView>
 
-      {/* Place Order CTA */}
-      <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 12 }]}>
+      {/* Bottom Bar */}
+      <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 8 }]}>
         <Button
-          title={`تأكيد الطلب — ${orderTotal.toFixed(2)} د.إ`}
+          title={`ادفع ${orderTotal.toFixed(2)} د.إ`}
           onPress={handlePlaceOrder}
           loading={loading}
+          disabled={loading || !items.length}
           fullWidth
-          size="lg"
         />
       </View>
-
-      {/* Payment WebView Modal */}
-      <Modal visible={paymentModal} animationType="slide">
-        <View style={styles.webviewContainer}>
-          <View style={[styles.webviewHeader, { paddingTop: insets.top }]}>
-            <TouchableOpacity onPress={() => setPaymentModal(false)}>
-              <Ionicons name="close" size={24} color={Colors.purpleDark} />
-            </TouchableOpacity>
-            <Text style={styles.webviewTitle}>إتمام الدفع</Text>
-            <View style={{ width: 24 }} />
-          </View>
-          {paymentUrl && (
-            <WebView
-              source={{ uri: paymentUrl }}
-              onNavigationStateChange={handleWebViewNav}
-              style={{ flex: 1 }}
-            />
-          )}
-        </View>
-      </Modal>
     </View>
   );
 }
@@ -272,7 +269,4 @@ const styles = StyleSheet.create({
   securityNote: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, margin: 16, marginTop: 12 },
   securityText: { fontFamily: 'Cairo_400Regular', fontSize: 12, color: Colors.textMuted },
   bottomBar: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 16, backgroundColor: Colors.cardBg, borderTopWidth: 1, borderTopColor: Colors.border, shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 8 },
-  webviewContainer: { flex: 1, backgroundColor: Colors.cardBg },
-  webviewHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: Colors.border },
-  webviewTitle: { fontFamily: 'Cairo_700Bold', fontSize: 16, color: Colors.textPrimary },
 });
