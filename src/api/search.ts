@@ -80,6 +80,25 @@ export async function smartSearch(query: string): Promise<SearchResult> {
   return search(query);
 }
 
+/** بحث يدوي بسيط — يستخدم /api/public/services بدل /api/search */
+export async function manualSearch(
+  query: string,
+  params?: { page?: number; limit?: number; sort?: string },
+): Promise<SearchResult> {
+  if (!query.trim()) return empty();
+  try {
+    const data = await publicGet<any>('/api/public/services', {
+      q: query,
+      ...(params as Record<string, unknown>),
+    });
+    const rawList: any[] = data?.services ?? (Array.isArray(data) ? data : []);
+    const services = rawList.map(mapService);
+    return { services, providers: [], categories: [], total: data?.total ?? services.length };
+  } catch {
+    return empty();
+  }
+}
+
 export async function getSearchSuggestions(query: string): Promise<string[]> {
   try {
     const data = await publicGet<any>('/api/search/suggestions', { q: query });

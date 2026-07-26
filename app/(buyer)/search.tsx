@@ -1,7 +1,7 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, TextInput, FlatList,
-  TouchableOpacity, ActivityIndicator,
+  TouchableOpacity, ActivityIndicator, Switch,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,7 +11,7 @@ import { Colors } from '../../src/constants/colors';
 import { ServiceCard } from '../../src/components/common/ServiceCard';
 import { CategoryCard } from '../../src/components/common/CategoryCard';
 import { EmptyState } from '../../src/components/common/EmptyState';
-import { search } from '../../src/api/search';
+import { search, manualSearch } from '../../src/api/search';
 import { getCategories } from '../../src/api/categories';
 
 const SORT_OPTIONS = [
@@ -27,13 +27,17 @@ export default function SearchScreen() {
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [activeSort, setActiveSort] = useState('newest');
+  const [isAiMode, setIsAiMode] = useState(true);
   const [debounceTimer, setDebounceTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
 
   const { data: categories = [] } = useQuery({ queryKey: ['categories'], queryFn: getCategories });
 
   const { data: results, isLoading, isFetching } = useQuery({
-    queryKey: ['search', debouncedQuery, activeSort],
-    queryFn: () => search(debouncedQuery, { sort: activeSort, limit: 20 }),
+    queryKey: ['search', debouncedQuery, activeSort, isAiMode],
+    queryFn: () =>
+      isAiMode
+        ? search(debouncedQuery, { sort: activeSort, limit: 20 })
+        : manualSearch(debouncedQuery, { sort: activeSort, limit: 20 }),
     enabled: debouncedQuery.length > 1,
   });
 
@@ -55,7 +59,7 @@ export default function SearchScreen() {
           <Ionicons name="search-outline" size={20} color={Colors.purpleMid} />
           <TextInput
             style={styles.input}
-            placeholder="ابحث عن خدمات، أقسام..."
+            placeholder={isAiMode ? 'ابحث بذكاء... (يفهم النية)' : 'ابحث عن خدمات، أقسام...'}
             placeholderTextColor={Colors.textLight}
             value={query}
             onChangeText={handleQueryChange}
@@ -68,6 +72,26 @@ export default function SearchScreen() {
               <Ionicons name="close-circle" size={18} color={Colors.purpleMid} />
             </TouchableOpacity>
           )}
+        </View>
+      </View>
+
+      {/* AI / Manual Switch */}
+      <View style={styles.switchRow}>
+        <Switch
+          value={isAiMode}
+          onValueChange={setIsAiMode}
+          thumbColor={isAiMode ? Colors.primary : Colors.textLight}
+          trackColor={{ false: Colors.border, true: `${Colors.primary}55` }}
+        />
+        <View style={styles.switchLabel}>
+          <Ionicons
+            name={isAiMode ? 'sparkles' : 'text-outline'}
+            size={14}
+            color={isAiMode ? Colors.primary : Colors.textMuted}
+          />
+          <Text style={[styles.switchText, isAiMode && styles.switchTextActive]}>
+            {isAiMode ? 'بحث ذكي (AI)' : 'بحث يدوي عادي'}
+          </Text>
         </View>
       </View>
 
@@ -98,59 +122,63 @@ export default function SearchScreen() {
       {isSearching && (
         <View style={styles.loadingCenter}>
           <ActivityIndicator color={Colors.primary} size="large" />
-          <Text style={styles.loadingText}>جاري البحث...</Text>
+          <Text style={styles.loadingText}>
+            {isAiMode ? 'البحث الذكي جارٍ...' : 'جاري البحث...'}
+          </Text>
         </View>
       )}
 
-      {/* No query — show categories */}
-      {!debouncedQuery && !isSearching && (
-        <View style={{ flex: 1 }}>
+      {/* Results */}
+      {!isSearching && hasResults && (
+        <>
+          {results!.services.length === 0 ? (
+            <EmptyState
+              icon="search-outline"
+              title="لا توجد نتائج"
+              subtitle={`لم نجد خدمات تطابق "${debouncedQuery}"`}
+            />
+          ) : (
+            <FlatList
+              data={results!.services}
+              keyExtractor={(s) => s.id}
+              contentContainerStyle={styles.resultsList}
+              showsVerticalScrollIndicator={false}
+              ListHeaderComponent={
+                <Text style={styles.resultCount}>
+                  {results!.total} نتيجة {isAiMode ? '(بحث ذكي)' : ''}
+                </Text>
+              }
+              renderItem={({ item }) => (
+                <ServiceCard
+                  service={item}
+                  onPress={() => router.push(`/service/${item.id}`)}
+                  variant="list"
+                />
+              )}
+            />
+          )}
+        </>
+      )}
+
+      {/* Browse categories when no query */}
+      {!isSearching && !hasResults && (
+        <>
           <Text style={styles.browseTitle}>تصفح الأقسام</Text>
           <FlatList
             data={categories}
             keyExtractor={(c) => c.id}
             numColumns={3}
-            contentContainerStyle={styles.catGrid}
             columnWrapperStyle={styles.catRow}
-            renderItem={({ item: cat, index }) => (
+            contentContainerStyle={styles.catGrid}
+            showsVerticalScrollIndicator={false}
+            renderItem={({ item }) => (
               <CategoryCard
-                category={cat}
-                onPress={() => router.push(`/category/${cat.id}`)}
-                index={index}
-                size="md"
+                category={item}
+                onPress={() => router.push(`/category/${item.id}`)}
               />
             )}
           />
-        </View>
-      )}
-
-      {/* Results */}
-      {hasResults && !isSearching && (
-        <FlatList
-          data={results.services}
-          keyExtractor={(s) => s.id}
-          contentContainerStyle={styles.resultsList}
-          showsVerticalScrollIndicator={false}
-          ListHeaderComponent={
-            <Text style={styles.resultCount}>
-              {results.total} نتيجة لـ "{debouncedQuery}"
-            </Text>
-          }
-          ListEmptyComponent={
-            <EmptyState
-              icon="search-outline"
-              title="لا توجد نتائج"
-              subtitle="جرب كلمات بحث مختلفة أو تصفح الأقسام"
-            />
-          }
-          renderItem={({ item }) => (
-            <ServiceCard
-              service={item}
-              onPress={() => router.push(`/service/${item.id}`)}
-              variant="list"
-            />
-          )}
-        />
+        </>
       )}
     </View>
   );
@@ -158,7 +186,7 @@ export default function SearchScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
-  searchRow: { padding: 16, paddingBottom: 8 },
+  searchRow: { paddingHorizontal: 16, paddingVertical: 12 },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -175,6 +203,27 @@ const styles = StyleSheet.create({
     fontFamily: 'Cairo_400Regular',
     fontSize: 15,
     color: Colors.textPrimary,
+  },
+  switchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingBottom: 10,
+    gap: 10,
+    justifyContent: 'flex-end',
+  },
+  switchLabel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  switchText: {
+    fontFamily: 'Cairo_600SemiBold',
+    fontSize: 13,
+    color: Colors.textMuted,
+  },
+  switchTextActive: {
+    color: Colors.primary,
   },
   sortRow: { marginBottom: 8 },
   chip: {

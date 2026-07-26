@@ -1,4 +1,4 @@
-import React, { useState, Component } from 'react';
+import React, { useState, Component, useEffect } from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,7 @@ import { Colors } from '../../src/constants/colors';
 import { Header } from '../../src/components/common/Header';
 import { Button } from '../../src/components/common/Button';
 import { createProviderService } from '../../src/api/provider';
+import { useAuthStore } from '../../src/store/authStore';
 
 // ─── Error Boundary ───────────────────────────────────────────────────────────
 interface EBState { hasError: boolean; message: string }
@@ -68,6 +69,26 @@ const errStyles = StyleSheet.create({
 function AddServiceContent() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { providerUser, providerToken } = useAuthStore();
+
+  // ── حماية: إعادة التوجيه إذا لم يكن مسجّلاً كمزود ────────────────────────
+  useEffect(() => {
+    if (!providerToken) {
+      // استخدام setTimeout لضمان أن الـ router جاهز للتنقل
+      const t = setTimeout(() => {
+        try {
+          if (router.canGoBack()) {
+            router.back();
+          } else {
+            router.replace('/(provider)/login');
+          }
+        } catch {
+          // ignore navigation errors on unmounted component
+        }
+      }, 0);
+      return () => clearTimeout(t);
+    }
+  }, [providerToken, router]);
 
   const [form, setForm] = useState({
     title: '',
@@ -91,13 +112,26 @@ function AddServiceContent() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['provider-services'] });
       Alert.alert('تمت الإضافة ✅', 'تم إضافة الخدمة بنجاح', [
-        { text: 'حسناً', onPress: () => router.back() },
+        {
+          text: 'حسناً',
+          onPress: () => {
+            try {
+              if (router.canGoBack()) {
+                router.back();
+              } else {
+                router.replace('/(provider)/services');
+              }
+            } catch {
+              // ignore
+            }
+          },
+        },
       ]);
     },
     onError: (error: any) => {
       const status = error?.response?.status;
       if (status === 401) {
-        // unauthorized handler in root _layout will redirect to login
+        // المزود غير مصادق عليه — الـ unauthorized handler سيتولى الأمر
       } else if (status === 422 || status === 400) {
         Alert.alert('بيانات غير صحيحة', 'تحقق من جميع الحقول وحاول مجدداً');
       } else if (status === 500) {
@@ -124,15 +158,18 @@ function AddServiceContent() {
     createMutation.mutate();
   };
 
+  // عدم رسم المحتوى إذا لم يكن مصادقاً (سيُعاد التوجيه قريباً)
+  if (!providerToken) {
+    return <View style={styles.container} />;
+  }
+
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      {/* Header handles its own safe-area top padding internally */}
       <View style={styles.container}>
         <Header title="إضافة خدمة جديدة" showBack />
-
         <ScrollView
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
@@ -141,48 +178,45 @@ function AddServiceContent() {
           <Text style={styles.label}>عنوان الخدمة *</Text>
           <TextInput
             style={styles.input}
-            placeholder="مثال: تصميم شعار احترافي"
-            placeholderTextColor={Colors.textLight}
             value={form.title}
             onChangeText={(v) => set('title', v)}
+            placeholder="مثال: تنظيف منزلي شامل"
+            placeholderTextColor={Colors.textLight}
             textAlign="right"
-            returnKeyType="next"
+            maxLength={120}
           />
 
           <Text style={styles.label}>وصف الخدمة</Text>
           <TextInput
             style={[styles.input, styles.textArea]}
-            placeholder="اكتب وصفاً تفصيلياً للخدمة..."
-            placeholderTextColor={Colors.textLight}
             value={form.description}
             onChangeText={(v) => set('description', v)}
+            placeholder="اشرح تفاصيل ما تقدمه..."
+            placeholderTextColor={Colors.textLight}
             multiline
             textAlign="right"
-            textAlignVertical="top"
+            maxLength={500}
           />
 
           <Text style={styles.label}>السعر (د.إ) *</Text>
           <TextInput
             style={styles.input}
-            placeholder="مثال: 150"
-            placeholderTextColor={Colors.textLight}
             value={form.price}
             onChangeText={(v) => set('price', v)}
+            placeholder="مثال: 150"
+            placeholderTextColor={Colors.textLight}
             keyboardType="decimal-pad"
             textAlign="right"
-            returnKeyType="next"
           />
 
           <Text style={styles.label}>مدة التسليم</Text>
           <TextInput
             style={styles.input}
-            placeholder="مثال: 1-3 أيام"
-            placeholderTextColor={Colors.textLight}
             value={form.deliveryTime}
             onChangeText={(v) => set('deliveryTime', v)}
+            placeholder="مثال: 2-3 أيام"
+            placeholderTextColor={Colors.textLight}
             textAlign="right"
-            returnKeyType="done"
-            onSubmitEditing={handleSubmit}
           />
 
           <View style={styles.btnWrapper}>
@@ -209,7 +243,6 @@ export default function AddServiceScreen() {
 }
 
 const styles = StyleSheet.create({
-  // Note: NO paddingTop here — Header handles safe area internally.
   container: { flex: 1, backgroundColor: Colors.background },
   content: { padding: 20, paddingBottom: 60 },
   label: {
