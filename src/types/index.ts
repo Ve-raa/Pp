@@ -110,6 +110,7 @@ export interface ServiceProvider {
   city?: string;
   bio?: string;
   servicesCount?: number;
+  category?: string;
 }
 
 // ─── Home Page Types ──────────────────────────────────────────────────────────
@@ -121,6 +122,22 @@ export interface Banner {
   link?: string;
   color?: string;
 }
+
+/** Per-section banners managed from the admin panel */
+export interface SectionBanner {
+  id: string;
+  sectionKey: HomeSectionKey;
+  image: string;
+  link?: string;
+  title?: string;
+  createdAt: string;
+}
+
+export type HomeSectionKey =
+  | 'featured'
+  | 'popular'
+  | 'best_sellers'
+  | 'top_providers';
 
 export interface HomePageData {
   banners?: Banner[];
@@ -148,83 +165,60 @@ export interface Cart {
   discount?: number;
   total: number;
   promoCode?: string;
-  promoDiscount?: number;
-}
-
-export interface PromoCodeResponse {
-  isValid: boolean;
-  code: string;
-  discount: number;
-  type: 'percentage' | 'fixed';
-  message?: string;
 }
 
 // ─── Order Types ──────────────────────────────────────────────────────────────
-export type OrderStatus =
-  | 'pending'
-  | 'confirmed'
-  | 'in_progress'
-  | 'completed'
-  | 'cancelled'
-  | 'refunded';
-
-export type PaymentMethod = 'stripe' | 'tabby' | 'tamara' | 'wallet' | 'cash';
-
-export interface OrderItem {
-  id: string;
-  serviceId: string;
-  service: Service;
-  quantity: number;
-  price: number;
-  notes?: string;
-}
-
 export interface Order {
   id: string;
-  orderNumber: string;
-  status: OrderStatus;
-  paymentMethod: PaymentMethod;
-  paymentStatus?: 'pending' | 'paid' | 'failed' | 'refunded';
-  items: OrderItem[];
-  subtotal: number;
-  discount?: number;
-  total: number;
-  promoCode?: string;
-  notes?: string;
-  address?: string;
+  buyerId?: string;
   providerId?: string;
-  provider?: ServiceProvider;
+  serviceId?: string;
+  service?: Service;
+  status: 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled';
+  price: number;
+  currency?: string;
+  notes?: string;
+  scheduledAt?: string;
+  completedAt?: string;
   createdAt: string;
   updatedAt?: string;
-  completedAt?: string;
   rating?: number;
   review?: string;
 }
 
-export interface PaymentInitRequest {
-  orderId: string;
-  method: string;
-  amount: number;
-  buyerId: string;
-  returnUrl?: string;
-  cancelUrl?: string;
+// ─── Notification Types ───────────────────────────────────────────────────────
+export interface Notification {
+  id: string;
+  title: string;
+  body: string;
+  type?: string;
+  isRead?: boolean;
+  data?: Record<string, unknown>;
+  createdAt: string;
 }
 
-export interface PaymentInitResponse {
-  paymentUrl?: string;
-  paymentId?: string;
-  clientSecret?: string;
-  status?: string;
-  demo?: boolean;
-  message?: string;
+// ─── Loyalty Types ────────────────────────────────────────────────────────────
+export interface LoyaltyData {
+  points: number;
+  tier?: string;
+  nextTier?: string;
+  pointsToNextTier?: number;
+  history?: LoyaltyTransaction[];
+}
+
+export interface LoyaltyTransaction {
+  id: string;
+  type: 'earned' | 'redeemed' | 'expired';
+  points: number;
+  description: string;
+  createdAt: string;
 }
 
 // ─── Wallet Types ─────────────────────────────────────────────────────────────
-export interface Wallet {
-  id?: string;
+export interface WalletData {
   balance: number;
-  currency: string;
-  pendingBalance?: number;
+  currency?: string;
+  transactions?: WalletTransaction[];
 }
 
 export interface WalletTransaction {
@@ -232,72 +226,10 @@ export interface WalletTransaction {
   type: 'credit' | 'debit';
   amount: number;
   description: string;
-  orderId?: string;
-  status: 'completed' | 'pending' | 'failed';
-  balance?: number;
   createdAt: string;
 }
 
-// ─── Loyalty Types ────────────────────────────────────────────────────────────
-export interface LoyaltyTier {
-  name: string;
-  minPoints: number;
-  maxPoints?: number;
-  color: string;
-  icon: string;
-  benefits?: string[];
-}
-
-export interface LoyaltyHistoryItem {
-  id: string;
-  type: 'earned' | 'earn' | 'redeemed' | 'expired';
-  points: number;
-  description: string;
-  orderId?: string;
-  createdAt: string;
-}
-
-export interface LoyaltyInfo {
-  points: number;
-  tier: string;
-  tierName?: string;
-  tierColor?: string;
-  tierIcon?: string;
-  nextTier?: string;
-  pointsToNextTier?: number;
-  totalEarned?: number;
-  totalRedeemed?: number;
-  history?: LoyaltyHistoryItem[];
-  tiers?: LoyaltyTier[];
-}
-
-export type LoyaltyTransaction = LoyaltyHistoryItem;
-
-// ─── Notification Types ───────────────────────────────────────────────────────
-export interface Notification {
-  id: string;
-  title: string;
-  body: string;
-  type?: 'order' | 'payment' | 'promo' | 'system' | 'general';
-  isRead: boolean;
-  data?: Record<string, unknown>;
-  createdAt: string;
-}
-
-// ─── Review Types ─────────────────────────────────────────────────────────────
-export interface Review {
-  id: string;
-  rating: number;
-  comment?: string;
-  userId?: string;
-  userName?: string;
-  userAvatar?: string;
-  serviceId?: string;
-  orderId?: string;
-  createdAt: string;
-}
-
-// ─── Provider Dashboard ───────────────────────────────────────────────────────
+// ─── Provider Dashboard Types ─────────────────────────────────────────────────
 export interface ProviderDashboard {
   totalOrders: number;
   pendingOrders: number;

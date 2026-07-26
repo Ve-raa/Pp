@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, Component } from 'react';
 import {
   View,
   Text,
@@ -9,7 +9,6 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Colors } from '../../src/constants/colors';
@@ -17,8 +16,56 @@ import { Header } from '../../src/components/common/Header';
 import { Button } from '../../src/components/common/Button';
 import { createProviderService } from '../../src/api/provider';
 
-export default function AddServiceScreen() {
-  const insets = useSafeAreaInsets();
+// ─── Error Boundary ───────────────────────────────────────────────────────────
+interface EBState { hasError: boolean; message: string }
+class ScreenErrorBoundary extends Component<
+  { children: React.ReactNode },
+  EBState
+> {
+  state: EBState = { hasError: false, message: '' };
+
+  static getDerivedStateFromError(error: Error): EBState {
+    return { hasError: true, message: error?.message ?? 'خطأ غير متوقع' };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <View style={errStyles.container}>
+          <Text style={errStyles.title}>تعذّر فتح هذه الشاشة</Text>
+          <Text style={errStyles.msg}>{this.state.message}</Text>
+        </View>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+const errStyles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 32,
+  },
+  title: {
+    fontFamily: 'Cairo_700Bold',
+    fontSize: 18,
+    color: Colors.textPrimary,
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  msg: {
+    fontFamily: 'Cairo_400Regular',
+    fontSize: 14,
+    color: Colors.textMuted,
+    textAlign: 'center',
+  },
+});
+
+// ─── Screen ───────────────────────────────────────────────────────────────────
+function AddServiceContent() {
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -29,7 +76,8 @@ export default function AddServiceScreen() {
     deliveryTime: '',
   });
 
-  const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
+  const set = (k: keyof typeof form, v: string) =>
+    setForm((f) => ({ ...f, [k]: v }));
 
   const createMutation = useMutation({
     mutationFn: () =>
@@ -49,7 +97,7 @@ export default function AddServiceScreen() {
     onError: (error: any) => {
       const status = error?.response?.status;
       if (status === 401) {
-        // _onUnauthorized في _layout.tsx سيتولى الأمر
+        // unauthorized handler in root _layout will redirect to login
       } else if (status === 422 || status === 400) {
         Alert.alert('بيانات غير صحيحة', 'تحقق من جميع الحقول وحاول مجدداً');
       } else if (status === 500) {
@@ -79,14 +127,16 @@ export default function AddServiceScreen() {
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <View style={[styles.container, { paddingTop: insets.top }]}>
+      {/* Header handles its own safe-area top padding internally */}
+      <View style={styles.container}>
         <Header title="إضافة خدمة جديدة" showBack />
 
         <ScrollView
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
           <Text style={styles.label}>عنوان الخدمة *</Text>
           <TextInput
@@ -107,7 +157,6 @@ export default function AddServiceScreen() {
             value={form.description}
             onChangeText={(v) => set('description', v)}
             multiline
-            numberOfLines={4}
             textAlign="right"
             textAlignVertical="top"
           />
@@ -119,7 +168,7 @@ export default function AddServiceScreen() {
             placeholderTextColor={Colors.textLight}
             value={form.price}
             onChangeText={(v) => set('price', v)}
-            keyboardType="numeric"
+            keyboardType="decimal-pad"
             textAlign="right"
             returnKeyType="next"
           />
@@ -133,6 +182,7 @@ export default function AddServiceScreen() {
             onChangeText={(v) => set('deliveryTime', v)}
             textAlign="right"
             returnKeyType="done"
+            onSubmitEditing={handleSubmit}
           />
 
           <View style={styles.btnWrapper}>
@@ -140,6 +190,7 @@ export default function AddServiceScreen() {
               title="إضافة الخدمة"
               onPress={handleSubmit}
               loading={createMutation.isPending}
+              disabled={createMutation.isPending}
               fullWidth
             />
           </View>
@@ -149,9 +200,18 @@ export default function AddServiceScreen() {
   );
 }
 
+export default function AddServiceScreen() {
+  return (
+    <ScreenErrorBoundary>
+      <AddServiceContent />
+    </ScreenErrorBoundary>
+  );
+}
+
 const styles = StyleSheet.create({
+  // Note: NO paddingTop here — Header handles safe area internally.
   container: { flex: 1, backgroundColor: Colors.background },
-  content: { padding: 20, paddingBottom: 40 },
+  content: { padding: 20, paddingBottom: 60 },
   label: {
     fontFamily: 'Cairo_600SemiBold',
     fontSize: 14,

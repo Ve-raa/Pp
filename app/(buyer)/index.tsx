@@ -1,7 +1,15 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
-  View, Text, ScrollView, StyleSheet, TouchableOpacity,
-  FlatList, RefreshControl, Dimensions, Image, TextInput, Platform,
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  FlatList,
+  RefreshControl,
+  Dimensions,
+  Image,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,19 +18,138 @@ import { useQuery } from '@tanstack/react-query';
 import { Colors } from '../../src/constants/colors';
 import { ServiceCard } from '../../src/components/common/ServiceCard';
 import { CategoryCard } from '../../src/components/common/CategoryCard';
+import { ProviderCard } from '../../src/components/common/ProviderCard';
 import { HomeLoadingSkeleton } from '../../src/components/common/LoadingState';
 import { useAuthStore } from '../../src/store/authStore';
 import { getHomePageData } from '../../src/api/home';
 import { getCategories } from '../../src/api/categories';
+import { getAllSectionBanners } from '../../src/api/sectionBanners';
+import type { SectionBanner, HomeSectionKey, Service, ServiceProvider } from '../../src/types';
 
 const { width: W } = Dimensions.get('window');
+const SLIDER_CARD_WIDTH = 200;
 
+// ─── Section Banner Strip ──────────────────────────────────────────────────────
+interface SectionBannerStripProps {
+  banners: SectionBanner[];
+}
+function SectionBannerStrip({ banners }: SectionBannerStripProps) {
+  if (!banners.length) return null;
+  return (
+    <FlatList
+      data={banners}
+      horizontal
+      pagingEnabled={banners.length > 1}
+      showsHorizontalScrollIndicator={false}
+      keyExtractor={(b) => b.id}
+      style={styles.sectionBannerList}
+      contentContainerStyle={styles.sectionBannerContent}
+      renderItem={({ item }) => (
+        <TouchableOpacity activeOpacity={0.9} style={[styles.sectionBanner, { width: W - 32 }]}>
+          <Image
+            source={{ uri: item.image }}
+            style={styles.sectionBannerImg}
+            resizeMode="cover"
+          />
+          {item.title && (
+            <View style={styles.sectionBannerOverlay}>
+              <Text style={styles.sectionBannerTitle}>{item.title}</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+      )}
+    />
+  );
+}
+
+// ─── Horizontal Service Slider ─────────────────────────────────────────────────
+interface ServiceSliderProps {
+  title: string;
+  services: Service[];
+  onSeeAll?: () => void;
+  sectionBanners: SectionBanner[];
+  onServicePress: (id: string) => void;
+}
+function ServiceSlider({
+  title,
+  services,
+  onSeeAll,
+  sectionBanners,
+  onServicePress,
+}: ServiceSliderProps) {
+  if (!services.length) return null;
+  return (
+    <View style={styles.section}>
+      <View style={styles.sectionHeader}>
+        {onSeeAll && (
+          <TouchableOpacity onPress={onSeeAll}>
+            <Text style={styles.seeAll}>عرض الكل</Text>
+          </TouchableOpacity>
+        )}
+        <Text style={styles.sectionTitle}>{title}</Text>
+      </View>
+      <SectionBannerStrip banners={sectionBanners} />
+      <FlatList
+        data={services}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        keyExtractor={(s) => s.id}
+        contentContainerStyle={styles.sliderContent}
+        renderItem={({ item }) => (
+          <ServiceCard
+            service={item}
+            onPress={() => onServicePress(item.id)}
+            variant="featured"
+            style={styles.sliderCard}
+          />
+        )}
+      />
+    </View>
+  );
+}
+
+// ─── Top Providers Slider ──────────────────────────────────────────────────────
+interface ProviderSliderProps {
+  providers: ServiceProvider[];
+  sectionBanners: SectionBanner[];
+  onProviderPress: (id: string) => void;
+}
+function ProviderSlider({ providers, sectionBanners, onProviderPress }: ProviderSliderProps) {
+  if (!providers.length) return null;
+  return (
+    <View style={styles.section}>
+      <View style={styles.sectionHeader}>
+        <View />
+        <View>
+          <Text style={styles.sectionTitle}>أبرز التجار</Text>
+          <Text style={styles.sectionSubtitle}>تجار موثوقون بتقييمات عالية</Text>
+        </View>
+      </View>
+      <SectionBannerStrip banners={sectionBanners} />
+      <FlatList
+        data={providers}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        keyExtractor={(p) => p.id}
+        contentContainerStyle={styles.sliderContent}
+        renderItem={({ item }) => (
+          <ProviderCard
+            provider={item}
+            onPress={() => onProviderPress(item.id)}
+          />
+        )}
+      />
+    </View>
+  );
+}
+
+// ─── Main Screen ───────────────────────────────────────────────────────────────
 export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { buyerUser } = useAuthStore();
-  const [activeTab, setActiveTab] = useState<'featured' | 'popular' | 'new'>('featured');
   const [refreshing, setRefreshing] = useState(false);
+  const [sectionBanners, setSectionBanners] = useState<SectionBanner[]>([]);
 
   const { data: homeData, isLoading: homeLoading, refetch } = useQuery({
     queryKey: ['home'],
@@ -34,48 +161,77 @@ export default function HomeScreen() {
     queryFn: getCategories,
   });
 
+  const loadSectionBanners = useCallback(async () => {
+    try {
+      const all = await getAllSectionBanners();
+      setSectionBanners(all);
+    } catch {
+      // non-critical — silently ignore
+    }
+  }, []);
+
+  useEffect(() => {
+    loadSectionBanners();
+  }, [loadSectionBanners]);
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await refetch();
+    await Promise.all([refetch(), loadSectionBanners()]);
     setRefreshing(false);
-  }, [refetch]);
+  }, [refetch, loadSectionBanners]);
 
-  const services = activeTab === 'featured'
-    ? homeData?.featuredServices
-    : activeTab === 'popular'
-    ? homeData?.popularServices
-    : homeData?.recentServices;
+  const bannersFor = (key: HomeSectionKey) =>
+    sectionBanners.filter((b) => b.sectionKey === key);
 
   if (homeLoading && !refreshing) return <HomeLoadingSkeleton />;
 
   return (
     <ScrollView
-      style={[styles.container, { paddingTop: insets.top + (Platform.OS === 'web' ? 67 : 0) }]}
+      style={[
+        styles.container,
+        { paddingTop: insets.top + (Platform.OS === 'web' ? 67 : 0) },
+      ]}
       showsVerticalScrollIndicator={false}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor={Colors.primary}
+        />
+      }
     >
-      {/* App Bar */}
+      {/* ── App Bar ─────────────────────────────────────────────────── */}
       <View style={styles.appBar}>
         <View style={styles.appBarLeft}>
-          <TouchableOpacity onPress={() => router.push('/notifications')} style={styles.iconBtn}>
+          <TouchableOpacity
+            onPress={() => router.push('/notifications')}
+            style={styles.iconBtn}
+          >
             <Ionicons name="notifications-outline" size={22} color={Colors.purpleDark} />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => router.push('/wishlist')} style={styles.iconBtn}>
+          <TouchableOpacity
+            onPress={() => router.push('/wishlist')}
+            style={styles.iconBtn}
+          >
             <Ionicons name="heart-outline" size={22} color={Colors.purpleDark} />
           </TouchableOpacity>
         </View>
         <View style={styles.appBarRight}>
           <View>
-            <Text style={styles.greeting}>مرحباً، {buyerUser?.name?.split(' ')[0] || 'عزيزي'} 👋</Text>
+            <Text style={styles.greeting}>
+              مرحباً، {buyerUser?.name?.split(' ')[0] || 'عزيزي'} 👋
+            </Text>
             <Text style={styles.subtitle}>ماذا تحتاج اليوم؟</Text>
           </View>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{buyerUser?.name?.[0] || 'V'}</Text>
+            <Text style={styles.avatarText}>
+              {buyerUser?.name?.[0] || 'V'}
+            </Text>
           </View>
         </View>
       </View>
 
-      {/* Search Bar */}
+      {/* ── Search Bar ──────────────────────────────────────────────── */}
       <TouchableOpacity
         onPress={() => router.push('/(buyer)/search')}
         style={styles.searchBar}
@@ -86,7 +242,7 @@ export default function HomeScreen() {
         <Ionicons name="options-outline" size={20} color={Colors.primary} />
       </TouchableOpacity>
 
-      {/* Banners */}
+      {/* ── Main Banners ─────────────────────────────────────────────── */}
       {!!homeData?.banners?.length && (
         <FlatList
           data={homeData.banners}
@@ -95,8 +251,12 @@ export default function HomeScreen() {
           showsHorizontalScrollIndicator={false}
           keyExtractor={(b) => b.id}
           contentContainerStyle={styles.bannersContainer}
+          style={styles.bannerList}
           renderItem={({ item: banner }) => (
-            <TouchableOpacity activeOpacity={0.9} style={[styles.banner, { width: W - 32 }]}>
+            <TouchableOpacity
+              activeOpacity={0.9}
+              style={[styles.banner, { width: W - 32 }]}
+            >
               <Image
                 source={{ uri: banner.image }}
                 style={styles.bannerImage}
@@ -112,11 +272,10 @@ export default function HomeScreen() {
               )}
             </TouchableOpacity>
           )}
-          style={styles.bannerList}
         />
       )}
 
-      {/* Categories */}
+      {/* ── Categories ──────────────────────────────────────────────── */}
       {categories.length > 0 && (
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -142,47 +301,39 @@ export default function HomeScreen() {
         </View>
       )}
 
-      {/* Services Tabs */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <TouchableOpacity onPress={() => router.push('/(buyer)/search')}>
-            <Text style={styles.seeAll}>عرض الكل</Text>
-          </TouchableOpacity>
-          <Text style={styles.sectionTitle}>الخدمات</Text>
-        </View>
+      {/* ── Featured Services Slider ─────────────────────────────────── */}
+      <ServiceSlider
+        title="الخدمات المميزة"
+        services={homeData?.featuredServices ?? []}
+        sectionBanners={bannersFor('featured')}
+        onSeeAll={() => router.push('/(buyer)/search')}
+        onServicePress={(id) => router.push(`/service/${id}`)}
+      />
 
-        <View style={styles.tabs}>
-          {(['featured', 'popular', 'new'] as const).map((tab) => (
-            <TouchableOpacity
-              key={tab}
-              onPress={() => setActiveTab(tab)}
-              style={[styles.tab, activeTab === tab && styles.tabActive]}
-            >
-              <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>
-                {tab === 'featured' ? 'مميزة' : tab === 'popular' ? 'الأكثر طلباً' : 'جديدة'}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+      {/* ── Popular (Most Viewed) Slider ─────────────────────────────── */}
+      <ServiceSlider
+        title="الأكثر مشاهدة"
+        services={homeData?.popularServices ?? []}
+        sectionBanners={bannersFor('popular')}
+        onSeeAll={() => router.push('/(buyer)/search')}
+        onServicePress={(id) => router.push(`/service/${id}`)}
+      />
 
-        {services && services.length > 0 ? (
-          <View style={styles.grid}>
-            {services.map((service) => (
-              <ServiceCard
-                key={service.id}
-                service={service}
-                onPress={() => router.push(`/service/${service.id}`)}
-                variant="grid"
-              />
-            ))}
-          </View>
-        ) : (
-          <View style={styles.emptyServices}>
-            <Ionicons name="cube-outline" size={40} color={Colors.primaryLight} />
-            <Text style={styles.emptyText}>لا توجد خدمات متاحة</Text>
-          </View>
-        )}
-      </View>
+      {/* ── Best Sellers Slider ──────────────────────────────────────── */}
+      <ServiceSlider
+        title="الأكثر مبيعاً"
+        services={homeData?.recentServices ?? []}
+        sectionBanners={bannersFor('best_sellers')}
+        onSeeAll={() => router.push('/(buyer)/search')}
+        onServicePress={(id) => router.push(`/service/${id}`)}
+      />
+
+      {/* ── Top Providers Slider ─────────────────────────────────────── */}
+      <ProviderSlider
+        providers={homeData?.topProviders ?? []}
+        sectionBanners={bannersFor('top_providers')}
+        onProviderPress={(id) => router.push(`/provider/${id}`)}
+      />
 
       <View style={{ height: 100 }} />
     </ScrollView>
@@ -191,6 +342,8 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
+
+  // App Bar
   appBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -200,8 +353,18 @@ const styles = StyleSheet.create({
   },
   appBarRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   appBarLeft: { flexDirection: 'row', gap: 4 },
-  greeting: { fontFamily: 'Cairo_700Bold', fontSize: 18, color: Colors.textPrimary, textAlign: 'right' },
-  subtitle: { fontFamily: 'Cairo_400Regular', fontSize: 13, color: Colors.textMuted, textAlign: 'right' },
+  greeting: {
+    fontFamily: 'Cairo_700Bold',
+    fontSize: 18,
+    color: Colors.textPrimary,
+    textAlign: 'right',
+  },
+  subtitle: {
+    fontFamily: 'Cairo_400Regular',
+    fontSize: 13,
+    color: Colors.textMuted,
+    textAlign: 'right',
+  },
   avatar: {
     width: 42,
     height: 42,
@@ -219,6 +382,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+
+  // Search Bar
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -237,7 +402,15 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 2,
   },
-  searchPlaceholder: { flex: 1, fontFamily: 'Cairo_400Regular', fontSize: 14, color: Colors.textMuted, textAlign: 'right' },
+  searchPlaceholder: {
+    flex: 1,
+    fontFamily: 'Cairo_400Regular',
+    fontSize: 14,
+    color: Colors.textMuted,
+    textAlign: 'right',
+  },
+
+  // Main Banners
   bannersContainer: { paddingHorizontal: 16, gap: 12 },
   bannerList: { marginBottom: 8 },
   banner: {
@@ -256,37 +429,77 @@ const styles = StyleSheet.create({
     padding: 14,
     backgroundColor: 'rgba(26,22,37,0.5)',
   },
-  bannerTitle: { fontFamily: 'Cairo_700Bold', fontSize: 16, color: '#fff', textAlign: 'right' },
-  bannerSubtitle: { fontFamily: 'Cairo_400Regular', fontSize: 12, color: 'rgba(255,255,255,0.8)', textAlign: 'right' },
-  section: { marginBottom: 20 },
+  bannerTitle: {
+    fontFamily: 'Cairo_700Bold',
+    fontSize: 16,
+    color: '#fff',
+    textAlign: 'right',
+  },
+  bannerSubtitle: {
+    fontFamily: 'Cairo_400Regular',
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.8)',
+    textAlign: 'right',
+  },
+
+  // Sections
+  section: { marginBottom: 24 },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     paddingHorizontal: 16,
     marginBottom: 12,
   },
-  sectionTitle: { fontFamily: 'Cairo_700Bold', fontSize: 17, color: Colors.textPrimary },
-  seeAll: { fontFamily: 'Cairo_600SemiBold', fontSize: 13, color: Colors.primary },
-  categoriesContainer: { paddingHorizontal: 16 },
-  tabs: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    gap: 8,
-    marginBottom: 14,
+  sectionTitle: {
+    fontFamily: 'Cairo_700Bold',
+    fontSize: 17,
+    color: Colors.textPrimary,
+    textAlign: 'right',
   },
-  tab: {
-    paddingVertical: 7,
-    paddingHorizontal: 16,
-    borderRadius: 20,
+  sectionSubtitle: {
+    fontFamily: 'Cairo_400Regular',
+    fontSize: 12,
+    color: Colors.textMuted,
+    textAlign: 'right',
+    marginTop: 2,
+  },
+  seeAll: {
+    fontFamily: 'Cairo_600SemiBold',
+    fontSize: 13,
+    color: Colors.primary,
+  },
+
+  // Section Banners
+  sectionBannerList: { marginBottom: 12 },
+  sectionBannerContent: { paddingHorizontal: 16, gap: 8 },
+  sectionBanner: {
+    height: 100,
+    borderRadius: 14,
+    overflow: 'hidden',
     backgroundColor: Colors.lightPurple,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    marginLeft: 8,
   },
-  tabActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
-  tabText: { fontFamily: 'Cairo_600SemiBold', fontSize: 13, color: Colors.purpleMid },
-  tabTextActive: { color: '#fff' },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 16, gap: 12 },
-  emptyServices: { alignItems: 'center', padding: 40, gap: 12 },
-  emptyText: { fontFamily: 'Cairo_400Regular', fontSize: 14, color: Colors.textMuted },
+  sectionBannerImg: { width: '100%', height: '100%' },
+  sectionBannerOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 10,
+    backgroundColor: 'rgba(26,22,37,0.45)',
+  },
+  sectionBannerTitle: {
+    fontFamily: 'Cairo_700Bold',
+    fontSize: 13,
+    color: '#fff',
+    textAlign: 'right',
+  },
+
+  // Categories
+  categoriesContainer: { paddingHorizontal: 16 },
+
+  // Sliders
+  sliderContent: { paddingHorizontal: 16, paddingRight: 24 },
+  sliderCard: { marginLeft: 0, marginRight: 12 },
 });

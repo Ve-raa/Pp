@@ -92,6 +92,7 @@ export default function RootLayout() {
             <Stack.Screen name="(buyer)" />
             <Stack.Screen name="(provider)" />
             <Stack.Screen name="service/[id]" options={{ animation: 'slide_from_bottom' }} />
+            <Stack.Screen name="provider/[id]" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="category/[id]" />
             <Stack.Screen name="order/[id]" />
             <Stack.Screen name="checkout" options={{ animation: 'slide_from_bottom' }} />
@@ -100,6 +101,7 @@ export default function RootLayout() {
             <Stack.Screen name="wallet" />
             <Stack.Screen name="loyalty" />
             <Stack.Screen name="support" />
+            <Stack.Screen name="admin" />
           </Stack>
         </QueryClientProvider>
       </SafeAreaProvider>
