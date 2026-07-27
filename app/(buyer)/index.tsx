@@ -175,7 +175,7 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [sectionBanners, setSectionBanners] = useState<SectionBanner[]>([]);
 
-  const { data: homeData, isLoading: homeLoading, refetch } = useQuery({
+  const { data: homeData, isLoading: homeLoading, isError: homeError, refetch } = useQuery({
     queryKey: ['home'],
     queryFn: getHomePageData,
   });
@@ -208,6 +208,26 @@ export default function HomeScreen() {
     sectionBanners.filter((b) => b.sectionKey === key);
 
   if (homeLoading && !refreshing) return <HomeLoadingSkeleton />;
+
+  if (homeError && !refreshing && !homeData) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, backgroundColor: Colors.background }}>
+        <Ionicons name="wifi-outline" size={48} color={Colors.textMuted} />
+        <Text style={{ fontFamily: 'Cairo_700Bold', fontSize: 16, color: Colors.textPrimary }}>
+          تعذّر تحميل الصفحة الرئيسية
+        </Text>
+        <Text style={{ fontFamily: 'Cairo_400Regular', fontSize: 13, color: Colors.textMuted, textAlign: 'center', paddingHorizontal: 40 }}>
+          تحقق من اتصالك بالإنترنت وحاول مجدداً
+        </Text>
+        <TouchableOpacity
+          onPress={() => refetch()}
+          style={{ backgroundColor: Colors.primary, paddingHorizontal: 24, paddingVertical: 10, borderRadius: 20, marginTop: 4 }}
+        >
+          <Text style={{ fontFamily: 'Cairo_700Bold', fontSize: 14, color: '#fff' }}>إعادة المحاولة</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <ScrollView

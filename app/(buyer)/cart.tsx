@@ -103,11 +103,11 @@ export default function CartScreen() {
         renderItem={({ item }) => (
           <View style={styles.cartItem}>
             <Image
-              source={{ uri: item.service.image || item.service.images?.[0] }}
+              source={{ uri: item.service?.image || item.service?.images?.[0] || 'https://veraapp.app/assets/images/placeholder.jpg' }}
               style={styles.itemImage}
             />
             <View style={styles.itemInfo}>
-              <Text style={styles.itemName} numberOfLines={2}>{item.service.title}</Text>
+              <Text style={styles.itemName} numberOfLines={2}>{item.service?.title ?? 'خدمة'}</Text>
               <Text style={styles.itemPrice}>{item.price} د.إ</Text>
               <View style={styles.qtyRow}>
                 <TouchableOpacity

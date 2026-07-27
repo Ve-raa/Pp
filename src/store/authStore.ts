@@ -87,7 +87,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   switchMode: (mode) => {
-    AsyncStorage.setItem(MODE_KEY, mode);
+    AsyncStorage.setItem(MODE_KEY, mode).catch(() => {});
     set({ mode });
   },
 
@@ -95,7 +95,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const current = get().buyerUser;
     if (!current) return;
     const updated = { ...current, ...user };
-    AsyncStorage.setItem(BUYER_USER_KEY, JSON.stringify(updated));
+    AsyncStorage.setItem(BUYER_USER_KEY, JSON.stringify(updated)).catch(() => {});
     set({ buyerUser: updated });
   },
 
@@ -103,7 +103,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const current = get().providerUser;
     if (!current) return;
     const updated = { ...current, ...user };
-    AsyncStorage.setItem(PROVIDER_USER_KEY, JSON.stringify(updated));
+    AsyncStorage.setItem(PROVIDER_USER_KEY, JSON.stringify(updated)).catch(() => {});
     set({ providerUser: updated });
   },
 

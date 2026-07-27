@@ -32,7 +32,7 @@ export default function SearchScreen() {
 
   const { data: categories = [] } = useQuery({ queryKey: ['categories'], queryFn: getCategories });
 
-  const { data: results, isLoading, isFetching } = useQuery({
+  const { data: results, isLoading, isFetching, isError: searchError } = useQuery({
     queryKey: ['search', debouncedQuery, activeSort, isAiMode],
     queryFn: () =>
       isAiMode
@@ -129,7 +129,14 @@ export default function SearchScreen() {
       )}
 
       {/* Results */}
-      {!isSearching && hasResults && (
+      {!isSearching && searchError && debouncedQuery.length > 1 && (
+        <View style={styles.loadingCenter}>
+          <Ionicons name="wifi-outline" size={40} color={Colors.textMuted} />
+          <Text style={styles.loadingText}>تعذّر البحث — تحقق من اتصالك وحاول مجدداً</Text>
+        </View>
+      )}
+
+      {!isSearching && !searchError && hasResults && (
         <>
           {results!.services.length === 0 ? (
             <EmptyState

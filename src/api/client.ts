@@ -15,16 +15,16 @@ export async function getProviderToken(): Promise<string | null> {
   try { return await SecureStore.getItemAsync(PROVIDER_TOKEN_KEY); } catch { return null; }
 }
 export async function saveBuyerToken(token: string): Promise<void> {
-  if (token) await SecureStore.setItemAsync(BUYER_TOKEN_KEY, token);
+  try { if (token) await SecureStore.setItemAsync(BUYER_TOKEN_KEY, token); } catch {}
 }
 export async function saveProviderToken(token: string): Promise<void> {
-  if (token) await SecureStore.setItemAsync(PROVIDER_TOKEN_KEY, token);
+  try { if (token) await SecureStore.setItemAsync(PROVIDER_TOKEN_KEY, token); } catch {}
 }
 export async function clearBuyerToken(): Promise<void> {
-  await SecureStore.deleteItemAsync(BUYER_TOKEN_KEY);
+  try { await SecureStore.deleteItemAsync(BUYER_TOKEN_KEY); } catch {}
 }
 export async function clearProviderToken(): Promise<void> {
-  await SecureStore.deleteItemAsync(PROVIDER_TOKEN_KEY);
+  try { await SecureStore.deleteItemAsync(PROVIDER_TOKEN_KEY); } catch {}
 }
 
 // ─── Unauthorized Handler ─────────────────────────────────────────────────────

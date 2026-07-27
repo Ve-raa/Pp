@@ -52,6 +52,7 @@ export default function CheckoutScreen() {
   const [buildingNumber, setBuildingNumber] = useState(params.buildingNumber ?? '');
   const [notes, setNotes] = useState(params.notes ?? '');
   const [loading, setLoading] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
 
   const orderTotal = total();
 
@@ -119,11 +120,18 @@ export default function CheckoutScreen() {
         }
 
         if (payment.paymentUrl) {
+          setRedirecting(true);
           // Open payment gateway in system browser; wait for vera:// deep-link redirect
-          const result = await WebBrowser.openAuthSessionAsync(
+          let result: Awaited<ReturnType<typeof WebBrowser.openAuthSessionAsync>>;
+          try {
+            result = await WebBrowser.openAuthSessionAsync(
             payment.paymentUrl,
             'vera://payment',
+            { createTask: false },
           );
+          } finally {
+            setRedirecting(false);
+          }
 
           const redirectedUrl =
             result.type === 'success' ? result.url : '';
@@ -289,8 +297,8 @@ export default function CheckoutScreen() {
         <Button
           title={`ادفع ${orderTotal.toFixed(2)} د.إ`}
           onPress={handlePlaceOrder}
-          loading={loading}
-          disabled={loading || !items.length}
+          loading={loading || redirecting}
+          disabled={loading || redirecting || !items.length}
           fullWidth
         />
       </View>
