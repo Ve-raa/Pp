@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../src/constants/colors';
 import { useAuthStore } from '../../src/store/authStore';
+import { LoginRequired } from '../../src/components/common/LoginRequired';
 
 interface MenuItemProps {
   icon: keyof typeof Ionicons.glyphMap;
@@ -40,7 +41,11 @@ function MenuItem({ icon, label, onPress, value, color = Colors.purpleMid, badge
 export default function ProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { buyerUser, logoutBuyer, providerToken, switchMode } = useAuthStore();
+  const { buyerUser, buyerToken, logoutBuyer, providerToken, switchMode } = useAuthStore();
+
+  if (!buyerToken) {
+    return <LoginRequired title="سجّل دخولك لعرض حسابك" subtitle="اعرض ملفك الشخصي ومحفظتك ونقاط ولائك بعد تسجيل الدخول" />;
+  }
 
   const handleLogout = () => {
     Alert.alert('تسجيل الخروج', 'هل أنت متأكد من تسجيل الخروج؟', [

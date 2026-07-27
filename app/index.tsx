@@ -23,12 +23,12 @@ export default function Index() {
         return;
       }
 
-      if (mode === 'buyer' && buyerToken) {
-        router.replace('/(buyer)');
-      } else if (mode === 'provider' && providerToken) {
+      if (mode === 'provider' && providerToken) {
         router.replace('/(provider)');
       } else {
-        router.replace('/(auth)/login');
+        // Allow guest browsing — go straight to buyer home
+        // Login will be requested only when performing an action
+        router.replace('/(buyer)');
       }
     };
 

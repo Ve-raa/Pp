@@ -12,6 +12,7 @@ import { Button } from '../src/components/common/Button';
 import { Header } from '../src/components/common/Header';
 import { useCartStore } from '../src/store/cartStore';
 import { useAuthStore } from '../src/store/authStore';
+import { LoginRequired } from '../src/components/common/LoginRequired';
 import { cancelOrder, createOrder, initPayment } from '../src/api/orders';
 import type { PaymentMethod } from '../src/types';
 
@@ -30,7 +31,11 @@ export default function CheckoutScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { items, total, promoCode, clearCart } = useCartStore();
-  const { buyerUser } = useAuthStore();
+  const { buyerUser, buyerToken } = useAuthStore();
+
+  if (!buyerToken) {
+    return <LoginRequired title="تسجيل الدخول مطلوب للدفع" subtitle="سجّل دخولك لإتمام عملية الدفع وتأكيد طلبك" showBack />;
+  }
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethod>('stripe');
   const params = useLocalSearchParams<{ address?: string; notes?: string }>();
   const address = params.address ?? '';

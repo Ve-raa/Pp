@@ -7,16 +7,24 @@ import { Colors } from '../src/constants/colors';
 import { ServiceCard } from '../src/components/common/ServiceCard';
 import { EmptyState } from '../src/components/common/EmptyState';
 import { Header } from '../src/components/common/Header';
+import { LoginRequired } from '../src/components/common/LoginRequired';
+import { useAuthStore } from '../src/store/authStore';
 import { getWishlist } from '../src/api/services';
 
 export default function WishlistScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { buyerToken } = useAuthStore();
 
   const { data: services = [], isLoading } = useQuery({
     queryKey: ['wishlist'],
     queryFn: getWishlist,
+    enabled: !!buyerToken,
   });
+
+  if (!buyerToken) {
+    return <LoginRequired title="سجّل دخولك لعرض مفضلتك" subtitle="احفظ الخدمات التي تعجبك وجدها بسهولة بعد تسجيل الدخول" showBack />;
+  }
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>

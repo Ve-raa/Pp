@@ -9,6 +9,8 @@ import { Colors } from '../src/constants/colors';
 import { Header } from '../src/components/common/Header';
 import { Button } from '../src/components/common/Button';
 import { EmptyState } from '../src/components/common/EmptyState';
+import { LoginRequired } from '../src/components/common/LoginRequired';
+import { useAuthStore } from '../src/store/authStore';
 import { getWallet, getWalletTransactions, topUpWallet } from '../src/api/wallet';
 import type { WalletTransaction } from '../src/types';
 
@@ -16,18 +18,25 @@ const TOP_UP_AMOUNTS = [50, 100, 200, 500];
 
 export default function WalletScreen() {
   const insets = useSafeAreaInsets();
+  const { buyerToken } = useAuthStore();
   const [topupAmount, setTopupAmount] = useState<number | null>(null);
   const [topupLoading, setTopupLoading] = useState(false);
 
   const { data: wallet, isLoading } = useQuery({
     queryKey: ['wallet'],
     queryFn: getWallet,
+    enabled: !!buyerToken,
   });
 
   const { data: txData } = useQuery({
     queryKey: ['wallet-transactions'],
     queryFn: () => getWalletTransactions({ limit: 50 }),
+    enabled: !!buyerToken,
   });
+
+  if (!buyerToken) {
+    return <LoginRequired title="سجّل دخولك لعرض محفظتك" subtitle="تحقق من رصيدك وسجّل معاملاتك المالية بعد تسجيل الدخول" showBack />;
+  }
 
   const handleTopUp = async () => {
     if (!topupAmount) return;

@@ -8,6 +8,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { Colors } from '../../src/constants/colors';
 import { EmptyState } from '../../src/components/common/EmptyState';
+import { LoginRequired } from '../../src/components/common/LoginRequired';
+import { useAuthStore } from '../../src/store/authStore';
 import { getOrders } from '../../src/api/orders';
 import type { Order, OrderStatus } from '../../src/types';
 
@@ -37,6 +39,7 @@ const TABS = [
 ];
 
 export default function OrdersScreen() {
+  const { buyerToken } = useAuthStore();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [activeStatus, setActiveStatus] = useState('');
@@ -44,7 +47,12 @@ export default function OrdersScreen() {
   const { data, isLoading } = useQuery({
     queryKey: ['orders', activeStatus],
     queryFn: () => getOrders({ status: activeStatus || undefined, limit: 30 }),
+    enabled: !!buyerToken,
   });
+
+  if (!buyerToken) {
+    return <LoginRequired title="سجّل دخولك لعرض طلباتك" subtitle="تابع حالة طلباتك وتاريخها بعد تسجيل الدخول" />;
+  }
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>

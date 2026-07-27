@@ -11,17 +11,24 @@ import { Colors } from '../../src/constants/colors';
 import { Button } from '../../src/components/common/Button';
 import { EmptyState } from '../../src/components/common/EmptyState';
 import { useCartStore } from '../../src/store/cartStore';
+import { useAuthStore } from '../../src/store/authStore';
+import { LoginRequired } from '../../src/components/common/LoginRequired';
 import { applyPromoCode } from '../../src/api/cart';
 
 export default function CartScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { buyerToken } = useAuthStore();
   const {
     items, subtotal, total, promoCode, promoDiscount, promoType,
     updateQuantity, removeItem, setPromo, removePromo, clearCart,
   } = useCartStore();
   const [promoInput, setPromoInput] = useState('');
   const [promoLoading, setPromoLoading] = useState(false);
+
+  if (!buyerToken) {
+    return <LoginRequired title="سجّل دخولك للتسوق" subtitle="أضف الخدمات إلى سلتك وأتمّ طلبك بسهولة بعد تسجيل الدخول" />;
+  }
 
   const handleApplyPromo = async () => {
     if (!promoInput.trim()) return;

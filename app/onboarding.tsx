@@ -64,12 +64,12 @@ export default function OnboardingScreen() {
 
   const handleDone = async () => {
     await AsyncStorage.setItem(ONBOARDING_KEY, '1');
-    router.replace('/(auth)/login');
+    router.replace('/(buyer)');
   };
 
   const handleSkip = async () => {
     await AsyncStorage.setItem(ONBOARDING_KEY, '1');
-    router.replace('/(auth)/login');
+    router.replace('/(buyer)');
   };
 
   const renderSlide = ({ item }: { item: typeof slides[0] }) => (

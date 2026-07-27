@@ -8,6 +8,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Colors } from '../src/constants/colors';
 import { Header } from '../src/components/common/Header';
 import { Button } from '../src/components/common/Button';
+import { LoginRequired } from '../src/components/common/LoginRequired';
+import { useAuthStore } from '../src/store/authStore';
 import { getLoyaltyInfo, redeemLoyaltyPoints } from '../src/api/loyalty';
 import type { LoyaltyTransaction } from '../src/types';
 
@@ -20,12 +22,18 @@ const TIER_COLORS: Record<string, string> = {
 
 export default function LoyaltyScreen() {
   const insets = useSafeAreaInsets();
+  const { buyerToken } = useAuthStore();
   const queryClient = useQueryClient();
 
   const { data: loyalty, isLoading } = useQuery({
     queryKey: ['loyalty'],
     queryFn: getLoyaltyInfo,
+    enabled: !!buyerToken,
   });
+
+  if (!buyerToken) {
+    return <LoginRequired title="سجّل دخولك لعرض نقاطك" subtitle="اكسب نقاط الولاء واستردّها مع كل طلب بعد تسجيل الدخول" showBack />;
+  }
 
   const redeemMutation = useMutation({
     mutationFn: () => redeemLoyaltyPoints(loyalty?.points || 0),

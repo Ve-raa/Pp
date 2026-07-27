@@ -8,17 +8,25 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Colors } from '../src/constants/colors';
 import { EmptyState } from '../src/components/common/EmptyState';
 import { Header } from '../src/components/common/Header';
+import { LoginRequired } from '../src/components/common/LoginRequired';
+import { useAuthStore } from '../src/store/authStore';
 import { getNotifications, markAllNotificationsRead, markNotificationRead } from '../src/api/notifications';
 import type { Notification } from '../src/types';
 
 export default function NotificationsScreen() {
   const insets = useSafeAreaInsets();
+  const { buyerToken } = useAuthStore();
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
     queryKey: ['notifications'],
     queryFn: () => getNotifications({ limit: 50 }),
+    enabled: !!buyerToken,
   });
+
+  if (!buyerToken) {
+    return <LoginRequired title="سجّل دخولك لعرض إشعاراتك" subtitle="تابع تحديثات طلباتك والعروض الخاصة بعد تسجيل الدخول" showBack />;
+  }
 
   const markAllMutation = useMutation({
     mutationFn: markAllNotificationsRead,
