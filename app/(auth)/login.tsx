@@ -67,7 +67,9 @@ export default function LoginScreen() {
     >
       <ScrollView
         style={[styles.container, { paddingTop: insets.top }]}
-        contentContainerStyle={styles.content}
+        // Bug 2 fix: add paddingBottom based on safe area insets so the
+        // provider link is never hidden behind the system navigation bar
+        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
@@ -143,10 +145,8 @@ export default function LoginScreen() {
           style={styles.providerLink}
         >
           <Ionicons name="briefcase-outline" size={16} color={Colors.purpleMid} />
-          <Text style={styles.providerLinkText}>دخول كمزود خدمة</Text>
+          <Text style={styles.providerLinkText}>دخول كمزود خدمة 💼</Text>
         </TouchableOpacity>
-
-        <View style={{ height: insets.bottom + 20 }} />
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
     marginTop: 24,
-    paddingVertical: 12,
+    paddingVertical: 14,
   },
   providerLinkText: { fontFamily: 'Cairo_600SemiBold', fontSize: 14, color: Colors.purpleMid },
 });
