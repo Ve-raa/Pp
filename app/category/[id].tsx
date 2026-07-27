@@ -106,7 +106,8 @@ export default function CategoryScreen() {
 
   // ─── صفحة وسيطة: التصنيفات الفرعية كأيقونات ─────────────────────────────
   // تُعرض عندما: توجد تصنيفات فرعية ولم يُختر أي منها بعد
-  if (subcategories.length > 0 && !selectedSubcat) {
+  // الصفحة الوسيطة تظهر دائماً لكل قسم (حتى بدون تصنيفات فرعية)
+  if (!selectedSubcat) {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <Header title={category?.name || 'تصفح الخدمات'} showBack />
@@ -160,7 +161,7 @@ export default function CategoryScreen() {
       <Header
         title={selectedSubcat && selectedSubcat !== '__all__' ? selectedSubcat : (category?.name || 'تصفح الخدمات')}
         showBack
-        onBack={subcategories.length > 0 ? () => setSelectedSubcat(null) : undefined}
+        onBack={() => setSelectedSubcat(null)}
       />
 
       {/* Sort chips */}

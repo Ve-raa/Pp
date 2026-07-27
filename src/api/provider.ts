@@ -94,3 +94,23 @@ export async function updateProviderProfile(data: Partial<ProviderUser>): Promis
   const res = await providerClient.patch<ProviderUser>('/api/provider/profile', data);
   return res.data;
 }
+
+
+// ─── متابعة / إلغاء متابعة مزود ─────────────────────────────────────────────
+import { buyerPost, publicGet as _publicGet } from './client';
+
+export async function followProvider(providerId: string): Promise<void> {
+  try {
+    await buyerPost(`/api/providers/${providerId}/follow`, {});
+  } catch {
+    // الخادم قد لا يدعم هذا المسار بعد — نتجاهل الخطأ ونحتفظ بالحالة المحلية
+  }
+}
+
+export async function unfollowProvider(providerId: string): Promise<void> {
+  try {
+    await buyerPost(`/api/providers/${providerId}/unfollow`, {});
+  } catch {
+    // تجاهل
+  }
+}

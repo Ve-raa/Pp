@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, TextInput,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
@@ -32,8 +32,9 @@ export default function CheckoutScreen() {
   const { items, total, promoCode, clearCart } = useCartStore();
   const { buyerUser } = useAuthStore();
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethod>('stripe');
-  const [notes, setNotes] = useState('');
-  const [address, setAddress] = useState('');
+  const params = useLocalSearchParams<{ address?: string; notes?: string }>();
+  const address = params.address ?? '';
+  const notes = params.notes ?? '';
   const [loading, setLoading] = useState(false);
   const orderTotal = total();
 
@@ -268,5 +269,33 @@ const styles = StyleSheet.create({
   notesInput: { backgroundColor: Colors.lightPurple, borderRadius: 12, padding: 14, minHeight: 80, fontFamily: 'Cairo_400Regular', fontSize: 14, color: Colors.textPrimary, borderWidth: 1, borderColor: Colors.border },
   securityNote: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, margin: 16, marginTop: 12 },
   securityText: { fontFamily: 'Cairo_400Regular', fontSize: 12, color: Colors.textMuted },
+  progressBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 40,
+    gap: 8,
+  },
+  progressStep: { alignItems: 'center', gap: 4 },
+  stepCircle: {
+    width: 28, height: 28, borderRadius: 14,
+    backgroundColor: Colors.lightPurple,
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 2, borderColor: Colors.border,
+  },
+  stepCircleActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
+  stepCircleDone: { backgroundColor: Colors.purpleMid, borderColor: Colors.purpleMid },
+  stepNum: { fontFamily: 'Cairo_700Bold', fontSize: 12, color: '#fff' },
+  stepLabel: { fontFamily: 'Cairo_400Regular', fontSize: 10, color: Colors.textMuted },
+  stepLabelActive: { color: Colors.primary, fontFamily: 'Cairo_700Bold' },
+  progressLine: { flex: 1, height: 2, backgroundColor: Colors.border, marginHorizontal: 4, marginBottom: 14 },
+  addressDisplay: {
+    fontFamily: 'Cairo_400Regular',
+    fontSize: 14,
+    color: Colors.textSecondary,
+    textAlign: 'right',
+    lineHeight: 22,
+  },
   bottomBar: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 16, backgroundColor: Colors.cardBg, borderTopWidth: 1, borderTopColor: Colors.border, shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 8 },
 });

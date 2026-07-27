@@ -24,6 +24,7 @@ import { useAuthStore } from '../../src/store/authStore';
 import { getHomePageData } from '../../src/api/home';
 import { getCategories } from '../../src/api/categories';
 import { getAllSectionBanners } from '../../src/api/sectionBanners';
+import { Linking } from 'react-native';
 import type { SectionBanner, HomeSectionKey, Service, ServiceProvider } from '../../src/types';
 
 const { width: W } = Dimensions.get('window');
@@ -34,7 +35,20 @@ interface SectionBannerStripProps {
   banners: SectionBanner[];
 }
 function SectionBannerStrip({ banners }: SectionBannerStripProps) {
+  const router = useRouter();
   if (!banners.length) return null;
+
+  const handleBannerPress = (link?: string) => {
+    if (!link) return;
+    try {
+      if (link.startsWith('http://') || link.startsWith('https://')) {
+        Linking.openURL(link).catch(() => {});
+      } else {
+        router.push(link as any);
+      }
+    } catch { /* ignore */ }
+  };
+
   return (
     <FlatList
       data={banners}
@@ -45,7 +59,12 @@ function SectionBannerStrip({ banners }: SectionBannerStripProps) {
       style={styles.sectionBannerList}
       contentContainerStyle={styles.sectionBannerContent}
       renderItem={({ item }) => (
-        <TouchableOpacity activeOpacity={0.9} style={[styles.sectionBanner, { width: W - 32 }]}>
+        <TouchableOpacity
+          activeOpacity={item.link ? 0.8 : 1}
+          style={[styles.sectionBanner, { width: W - 32 }]}
+          onPress={() => handleBannerPress(item.link)}
+          disabled={!item.link}
+        >
           <Image
             source={{ uri: item.image }}
             style={styles.sectionBannerImg}
@@ -54,6 +73,11 @@ function SectionBannerStrip({ banners }: SectionBannerStripProps) {
           {item.title && (
             <View style={styles.sectionBannerOverlay}>
               <Text style={styles.sectionBannerTitle}>{item.title}</Text>
+            </View>
+          )}
+          {item.link && (
+            <View style={styles.sectionBannerLinkBadge}>
+              <Text style={styles.sectionBannerLinkText}>اضغط للمزيد ←</Text>
             </View>
           )}
         </TouchableOpacity>
@@ -488,6 +512,20 @@ const styles = StyleSheet.create({
     right: 0,
     padding: 10,
     backgroundColor: 'rgba(26,22,37,0.45)',
+  },
+  sectionBannerLinkBadge: {
+    position: 'absolute',
+    top: 8,
+    left: 10,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  sectionBannerLinkText: {
+    fontFamily: 'Cairo_600SemiBold',
+    fontSize: 10,
+    color: '#fff',
   },
   sectionBannerTitle: {
     fontFamily: 'Cairo_700Bold',

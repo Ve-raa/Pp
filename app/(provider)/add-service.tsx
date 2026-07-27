@@ -72,20 +72,19 @@ function AddServiceContent() {
   const { providerUser, providerToken } = useAuthStore();
 
   // ── حماية: إعادة التوجيه إذا لم يكن مسجّلاً كمزود ────────────────────────
+  // نستخدم ref لمنع تشغيل التأثير مرتين أو بعد unmount
+  const isRedirectingRef = React.useRef(false);
+
   useEffect(() => {
-    if (!providerToken) {
-      // استخدام setTimeout لضمان أن الـ router جاهز للتنقل
+    if (!providerToken && !isRedirectingRef.current) {
+      isRedirectingRef.current = true;
       const t = setTimeout(() => {
         try {
-          if (router.canGoBack()) {
-            router.back();
-          } else {
-            router.replace('/(provider)/login');
-          }
+          router.replace('/(provider)/login');
         } catch {
-          // ignore navigation errors on unmounted component
+          // ignore — قد تكون الشاشة unmounted
         }
-      }, 0);
+      }, 50); // زيادة التأخير لضمان جاهزية stack التنقل
       return () => clearTimeout(t);
     }
   }, [providerToken, router]);
@@ -101,14 +100,20 @@ function AddServiceContent() {
     setForm((f) => ({ ...f, [k]: v }));
 
   const createMutation = useMutation({
-    mutationFn: () =>
-      createProviderService({
-        title: form.title.trim(),
+    mutationFn: async () => {
+      // validate locally before calling API to avoid unnecessary crashes
+      const title = form.title.trim();
+      const price = parseFloat(form.price);
+      if (!title) throw new Error('VALIDATION_TITLE');
+      if (isNaN(price) || price <= 0) throw new Error('VALIDATION_PRICE');
+      return createProviderService({
+        title,
         description: form.description.trim(),
-        price: parseFloat(form.price) || 0,
+        price,
         deliveryTime: form.deliveryTime.trim(),
         images: [],
-      }),
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['provider-services'] });
       Alert.alert('تمت الإضافة ✅', 'تم إضافة الخدمة بنجاح', [
@@ -129,15 +134,27 @@ function AddServiceContent() {
       ]);
     },
     onError: (error: any) => {
+      const msg = error?.message ?? '';
+      if (msg === 'VALIDATION_TITLE') {
+        Alert.alert('تنبيه', 'يرجى إدخال عنوان الخدمة');
+        return;
+      }
+      if (msg === 'VALIDATION_PRICE') {
+        Alert.alert('تنبيه', 'يرجى إدخال سعر صحيح أكبر من صفر');
+        return;
+      }
       const status = error?.response?.status;
       if (status === 401) {
         // المزود غير مصادق عليه — الـ unauthorized handler سيتولى الأمر
+        try { router.replace('/(provider)/login'); } catch { /* ignore */ }
       } else if (status === 422 || status === 400) {
         Alert.alert('بيانات غير صحيحة', 'تحقق من جميع الحقول وحاول مجدداً');
       } else if (status === 500) {
         Alert.alert('خطأ في الخادم', 'حدث خطأ في الخادم، يرجى المحاولة لاحقاً');
+      } else if (status === 0 || msg.includes('Network') || msg.includes('timeout')) {
+        Alert.alert('خطأ في الاتصال', 'تحقق من اتصال الإنترنت وحاول مجدداً');
       } else {
-        Alert.alert('خطأ', 'تعذّر إضافة الخدمة، تحقق من الاتصال وحاول مجدداً');
+        Alert.alert('خطأ', 'تعذّر إضافة الخدمة. يرجى المحاولة مجدداً');
       }
     },
   });
@@ -159,8 +176,15 @@ function AddServiceContent() {
   };
 
   // عدم رسم المحتوى إذا لم يكن مصادقاً (سيُعاد التوجيه قريباً)
-  if (!providerToken) {
-    return <View style={styles.container} />;
+  // هذا يمنع أي crash ناتج عن محاولة رسم العناصر بدون بيانات المزود
+  if (!providerToken || !providerUser) {
+    return (
+      <View style={[styles.container, { alignItems: 'center', justifyContent: 'center' }]}>
+        <Text style={{ fontFamily: 'Cairo_400Regular', color: Colors.textMuted, fontSize: 14 }}>
+          جاري التحقق...
+        </Text>
+      </View>
+    );
   }
 
   return (

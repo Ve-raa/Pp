@@ -14,7 +14,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
-import { publicGet } from '../../src/api/client';
+import { publicGet, buyerPost } from '../../src/api/client';
 import { Colors } from '../../src/constants/colors';
 import { ServiceCard } from '../../src/components/common/ServiceCard';
 import type { Service, ServiceProvider } from '../../src/types';
@@ -81,6 +81,21 @@ export default function ProviderProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [following, setFollowing] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
+
+  const handleFollowToggle = async () => {
+    if (followLoading || !id) return;
+    const newVal = !following;
+    setFollowing(newVal); // optimistic update
+    setFollowLoading(true);
+    try {
+      await buyerPost(`/api/providers/${id}/${newVal ? 'follow' : 'unfollow'}`, {});
+    } catch {
+      // الخادم لا يدعم هذا المسار بعد — نحتفظ بالحالة المحلية
+    } finally {
+      setFollowLoading(false);
+    }
+  };
 
   const { data: provider, isLoading } = useQuery({
     queryKey: ['provider', id],
@@ -203,8 +218,9 @@ export default function ProviderProfileScreen() {
           {/* Follow button */}
           <TouchableOpacity
             style={[styles.followBtn, following && styles.followBtnActive]}
-            onPress={() => setFollowing((v) => !v)}
+            onPress={handleFollowToggle}
             activeOpacity={0.82}
+            disabled={followLoading}
           >
             <Ionicons
               name={following ? 'heart' : 'heart-outline'}

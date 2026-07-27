@@ -185,7 +185,7 @@ export default function CartScreen() {
 
             <Button
               title={`الدفع — ${t.toFixed(2)} د.إ`}
-              onPress={() => router.push('/checkout')}
+              onPress={() => router.push('/shipping')}
               size="md"
               style={styles.checkoutBtn}
             />
