@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Image, TouchableOpacity,
-  FlatList, Alert, ActivityIndicator, Dimensions,
+  FlatList, Alert, ActivityIndicator, Dimensions, Modal, Pressable,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -26,6 +26,8 @@ export default function ServiceDetailScreen() {
   const [wishlisted, setWishlisted] = useState(false);
   const [activeImage, setActiveImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
+  // Bug 5 fix: state for custom login-required modal
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   const { data: service, isLoading } = useQuery({
     queryKey: ['service', id],
@@ -50,10 +52,8 @@ export default function ServiceDetailScreen() {
   const handleAddToCart = () => {
     if (!service) return;
     if (!buyerToken) {
-      Alert.alert('تسجيل الدخول مطلوب', 'يجب تسجيل الدخول لإضافة الخدمة للسلة', [
-        { text: 'إلغاء', style: 'cancel' },
-        { text: 'تسجيل الدخول', onPress: () => router.push('/(auth)/login') },
-      ]);
+      // Bug 5 fix: show custom branded modal instead of system Alert
+      setShowLoginModal(true);
       return;
     }
     addItem(service, quantity);
@@ -91,6 +91,53 @@ export default function ServiceDetailScreen() {
 
   return (
     <View style={[styles.container, { paddingBottom: insets.bottom + 80 }]}>
+      {/* Bug 5 fix: Custom login-required modal */}
+      <Modal
+        visible={showLoginModal}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => setShowLoginModal(false)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setShowLoginModal(false)}>
+          <Pressable style={styles.modalBox} onPress={() => {}}>
+            {/* Icon */}
+            <View style={styles.modalIconCircle}>
+              <Ionicons name="lock-closed-outline" size={36} color={Colors.primary} />
+            </View>
+
+            {/* Brand */}
+            <Text style={styles.modalBrand}>VÉRA</Text>
+
+            {/* Title */}
+            <Text style={styles.modalTitle}>تسجيل الدخول مطلوب</Text>
+            <Text style={styles.modalSubtitle}>
+              سجّل دخولك لإضافة الخدمة إلى سلتك والاستمتاع بجميع المميزات
+            </Text>
+
+            {/* Buttons */}
+            <TouchableOpacity
+              style={styles.modalLoginBtn}
+              activeOpacity={0.85}
+              onPress={() => {
+                setShowLoginModal(false);
+                router.push('/(auth)/login');
+              }}
+            >
+              <Text style={styles.modalLoginBtnText}>تسجيل الدخول</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.modalCancelBtn}
+              activeOpacity={0.7}
+              onPress={() => setShowLoginModal(false)}
+            >
+              <Text style={styles.modalCancelBtnText}>إلغاء</Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
       {/* Floating back / wishlist */}
       <View style={[styles.topBar, { top: insets.top + 8 }]}>
         <TouchableOpacity
@@ -400,4 +447,82 @@ const styles = StyleSheet.create({
   qtyBtn: { width: 28, height: 28, borderRadius: 8, backgroundColor: Colors.cardBg, alignItems: 'center', justifyContent: 'center' },
   qtyText: { fontFamily: 'Cairo_700Bold', fontSize: 15, color: Colors.textPrimary, minWidth: 22, textAlign: 'center' },
   addBtn: { flex: 0, minWidth: 118 },
+
+  // Bug 5: Custom login modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(26,22,37,0.55)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+  },
+  modalBox: {
+    width: '100%',
+    backgroundColor: Colors.cardBg,
+    borderRadius: 24,
+    padding: 28,
+    alignItems: 'center',
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  modalIconCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: Colors.lightPurple,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  modalBrand: {
+    fontFamily: 'Cairo_700Bold',
+    fontSize: 22,
+    color: Colors.primary,
+    letterSpacing: 2,
+    marginBottom: 8,
+  },
+  modalTitle: {
+    fontFamily: 'Cairo_700Bold',
+    fontSize: 18,
+    color: Colors.textPrimary,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  modalSubtitle: {
+    fontFamily: 'Cairo_400Regular',
+    fontSize: 13,
+    color: Colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  modalLoginBtn: {
+    width: '100%',
+    backgroundColor: Colors.primary,
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  modalLoginBtnText: {
+    fontFamily: 'Cairo_700Bold',
+    fontSize: 15,
+    color: '#fff',
+  },
+  modalCancelBtn: {
+    width: '100%',
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    borderRadius: 14,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  modalCancelBtnText: {
+    fontFamily: 'Cairo_600SemiBold',
+    fontSize: 14,
+    color: Colors.textMuted,
+  },
 });
