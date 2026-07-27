@@ -9,6 +9,8 @@ import {
   FlatList,
   ActivityIndicator,
   Dimensions,
+  Modal,
+  Pressable,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -71,7 +73,6 @@ async function getProviderProfile(id: string): Promise<ProviderProfile> {
     id: String(p.id),
     name: p.name ?? '',
     avatar: fullUrl(p.avatar ?? p.logo_url),
-    // Bug 1 fix: try all possible field names the API might use for cover image
     coverImage: fullUrl(
       p.cover_image ?? p.coverImage ?? p.cover ?? p.banner_image ?? p.banner ?? p.header_image ?? p.profile_cover
     ),
@@ -107,14 +108,14 @@ export default function ProviderProfileScreen() {
   const insets = useSafeAreaInsets();
   const [following, setFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
-  // Bug 4 fix: read auth state to check if user is logged in
+  // Retrieve auth state to guard follow action
   const { buyerToken } = useAuthStore();
 
   const handleFollowToggle = async () => {
-    // Bug 4 fix: redirect to login if user is not authenticated
     if (!buyerToken) {
-      router.push('/(auth)/login');
+      setShowLoginModal(true);
       return;
     }
     if (followLoading || !id) return;
@@ -181,6 +182,45 @@ export default function ProviderProfileScreen() {
 
   return (
     <View style={[styles.container, { paddingBottom: insets.bottom + 16 }]}>
+      {/* Custom login modal — same design as service detail */}
+      <Modal
+        visible={showLoginModal}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => setShowLoginModal(false)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setShowLoginModal(false)}>
+          <Pressable style={styles.modalBox} onPress={() => {}}>
+            <View style={styles.modalIconCircle}>
+              <Ionicons name="lock-closed-outline" size={36} color={Colors.primary} />
+            </View>
+            <Text style={styles.modalBrand}>VÉRA</Text>
+            <Text style={styles.modalTitle}>تسجيل الدخول مطلوب</Text>
+            <Text style={styles.modalSubtitle}>
+              سجّل دخولك لمتابعة التاجر والاستمتاع بجميع المميزات
+            </Text>
+            <TouchableOpacity
+              style={styles.modalLoginBtn}
+              activeOpacity={0.85}
+              onPress={() => {
+                setShowLoginModal(false);
+                router.push('/(auth)/login');
+              }}
+            >
+              <Text style={styles.modalLoginBtnText}>تسجيل الدخول</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.modalCancelBtn}
+              activeOpacity={0.7}
+              onPress={() => setShowLoginModal(false)}
+            >
+              <Text style={styles.modalCancelBtnText}>إلغاء</Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
       {/* Cover */}
       <View style={styles.coverWrapper}>
         {provider.coverImage ? (
@@ -583,5 +623,83 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
+  },
+
+  // Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  modalBox: {
+    backgroundColor: Colors.cardBg,
+    borderRadius: 24,
+    padding: 28,
+    alignItems: 'center',
+    width: '100%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 12,
+  },
+  modalIconCircle: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: Colors.lightPurple,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  modalBrand: {
+    fontFamily: 'Cairo_700Bold',
+    fontSize: 22,
+    color: Colors.primary,
+    letterSpacing: 2,
+    marginBottom: 8,
+  },
+  modalTitle: {
+    fontFamily: 'Cairo_700Bold',
+    fontSize: 18,
+    color: Colors.textPrimary,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  modalSubtitle: {
+    fontFamily: 'Cairo_400Regular',
+    fontSize: 13,
+    color: Colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  modalLoginBtn: {
+    width: '100%',
+    backgroundColor: Colors.primary,
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  modalLoginBtnText: {
+    fontFamily: 'Cairo_700Bold',
+    fontSize: 15,
+    color: '#fff',
+  },
+  modalCancelBtn: {
+    width: '100%',
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    borderRadius: 14,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  modalCancelBtnText: {
+    fontFamily: 'Cairo_600SemiBold',
+    fontSize: 14,
+    color: Colors.textMuted,
   },
 });

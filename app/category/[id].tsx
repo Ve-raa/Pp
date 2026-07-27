@@ -41,7 +41,6 @@ const SORT_OPTIONS = [
   { label: 'الأغلى', value: 'price_desc' },
 ];
 
-// Bug 3 fix: ألوان أفتح وأخف للبطاقات مع الحفاظ على وضوح النص الأبيض
 const SUBCAT_COLORS = [
   '#818cf8', // indigo فاتح (بدلاً من #6366f1 الداكن)
   '#7c6fa8', // بنفسجي فاتح (بدلاً من #4A3F6B الداكن جداً)
@@ -117,7 +116,6 @@ export default function CategoryScreen() {
           <Text style={styles.subcatTitle}>اختر تصنيفاً</Text>
 
           {/* زر "الكل" يعرض جميع الخدمات */}
-          {/* Bug 3 fix: استخدام لون أفتح لبطاقة "جميع الخدمات" */}
           <TouchableOpacity
             style={[styles.subcatCard, { backgroundColor: '#818cf8' }]}
             onPress={() => setSelectedSubcat('__all__')}

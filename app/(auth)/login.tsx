@@ -67,8 +67,6 @@ export default function LoginScreen() {
     >
       <ScrollView
         style={[styles.container, { paddingTop: insets.top }]}
-        // Bug 2 fix: add paddingBottom based on safe area insets so the
-        // provider link is never hidden behind the system navigation bar
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}

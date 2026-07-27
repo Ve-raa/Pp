@@ -163,6 +163,8 @@ export default function ServiceDetailScreen() {
               ref={carouselRef}
               horizontal
               pagingEnabled
+              nestedScrollEnabled
+              style={{ width: W }}
               showsHorizontalScrollIndicator={false}
               scrollEventThrottle={16}
               decelerationRate="fast"
