@@ -59,8 +59,12 @@ export async function getCategories(): Promise<Category[]> {
 }
 
 export async function getCategoryById(id: string): Promise<Category> {
-  const data = await publicGet<any>(`/api/public/categories/${id}`);
-  return mapCategory(data?.category ?? data);
+  const categories = await getCategories();
+  const category = categories.find((item) => item.id === id || item.slug === id);
+  if (!category) {
+    throw new Error('لم يتم العثور على هذا القسم.');
+  }
+  return category;
 }
 
 export async function getServicesByCategory(
@@ -73,15 +77,31 @@ export async function getServicesByCategory(
     maxPrice?: number;
   }
 ): Promise<{ services: Service[]; total: number; page: number; totalPages: number }> {
-  const data = await publicGet<any>('/api/public/services', {
-    categoryId,
+  let categorySlug = categoryId;
+  if (categoryId !== 'all' && /^\d+$/.test(categoryId)) {
+    const categories = await getCategories();
+    categorySlug = categories.find((item) => item.id === categoryId)?.slug ?? categoryId;
+  }
+
+  const query: Record<string, unknown> = {
     ...(params as Record<string, unknown>),
+  };
+  if (categorySlug !== 'all') {
+    // The public API filters by the category slug, not the numeric category id.
+    query.category = categorySlug;
+  }
+
+  const data = await publicGet<any>('/api/public/services', {
+    ...query,
   });
   const services = (data?.services ?? data ?? []).map(mapService);
   return {
     services,
-    total: data?.total ?? services.length,
+    // The API currently reports the unfiltered catalog total. Use the
+    // filtered result length for category screens until pagination metadata
+    // is corrected server-side.
+    total: services.length,
     page: data?.page ?? 1,
-    totalPages: data?.totalPages ?? 1,
+    totalPages: data?.totalPages ?? (services.length ? 1 : 0),
   };
 }

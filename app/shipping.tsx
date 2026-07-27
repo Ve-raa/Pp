@@ -5,7 +5,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TextInput,
-  KeyboardAvoidingView, Platform,
+  KeyboardAvoidingView, Platform, Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,24 +14,49 @@ import { Colors } from '../src/constants/colors';
 import { Button } from '../src/components/common/Button';
 import { Header } from '../src/components/common/Header';
 import { useCartStore } from '../src/store/cartStore';
+import { useAuthStore } from '../src/store/authStore';
 
 export default function ShippingScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { items, total } = useCartStore();
-  const [address, setAddress] = useState('');
+  const { buyerUser } = useAuthStore();
+  const [fullName, setFullName] = useState(buyerUser?.name ?? '');
+  const [phone, setPhone] = useState(buyerUser?.phone ?? '');
+  const [city, setCity] = useState(buyerUser?.city ?? '');
+  const [district, setDistrict] = useState('');
+  const [street, setStreet] = useState('');
+  const [buildingNumber, setBuildingNumber] = useState('');
   const [notes, setNotes] = useState('');
   const orderTotal = total();
 
   const handleContinue = () => {
-    // ننتقل لصفحة الدفع مع تمرير بيانات الشحن عبر المعاملات
-    router.push({
-      pathname: '/checkout',
-      params: {
-        address: address.trim(),
-        notes: notes.trim(),
-      },
-    });
+    const normalizedPhone = phone.replace(/[\s()-]/g, '');
+    if (!fullName.trim() || !/^\+?[0-9]{8,15}$/.test(normalizedPhone)) {
+      Alert.alert('بيانات غير مكتملة', 'أدخل الاسم الكامل ورقم هاتف صحيحاً (من 8 إلى 15 رقماً).');
+      return;
+    }
+    if (!city.trim() || !district.trim() || !street.trim() || !buildingNumber.trim()) {
+      Alert.alert('العنوان غير مكتمل', 'أدخل المدينة والحي والشارع ورقم المبنى للمتابعة.');
+      return;
+    }
+
+    try {
+      router.push({
+        pathname: '/checkout',
+        params: {
+          fullName: fullName.trim(),
+          phone: normalizedPhone,
+          city: city.trim(),
+          district: district.trim(),
+          street: street.trim(),
+          buildingNumber: buildingNumber.trim(),
+          notes: notes.trim(),
+        },
+      });
+    } catch {
+      Alert.alert('تعذّر المتابعة', 'حدث خطأ أثناء حفظ معلومات التوصيل. حاول مرة أخرى.');
+    }
   };
 
   return (
@@ -70,7 +95,7 @@ export default function ShippingScreen() {
             {items.map((item) => (
               <View key={item.serviceId} style={styles.itemRow}>
                 <Text style={styles.itemQty}>x{item.quantity}</Text>
-                <Text style={styles.itemName} numberOfLines={1}>{item.title}</Text>
+                <Text style={styles.itemName} numberOfLines={1}>{item.service?.title ?? 'خدمة'}</Text>
                 <Text style={styles.itemPrice}>
                   {(item.price * item.quantity).toFixed(2)} د.إ
                 </Text>
@@ -83,7 +108,35 @@ export default function ShippingScreen() {
             </View>
           </View>
 
-          {/* عنوان التوصيل */}
+          {/* بيانات المستلم */}
+          <View style={styles.card}>
+            <View style={styles.fieldHeader}>
+              <Ionicons name="person-outline" size={18} color={Colors.primary} />
+              <Text style={styles.cardTitle}>بيانات المستلم</Text>
+            </View>
+            <TextInput
+              style={styles.input}
+              placeholder="الاسم الكامل"
+              placeholderTextColor={Colors.textLight}
+              value={fullName}
+              onChangeText={setFullName}
+              textAlign="right"
+              returnKeyType="next"
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="رقم الهاتف"
+              placeholderTextColor={Colors.textLight}
+              value={phone}
+              onChangeText={setPhone}
+              keyboardType="phone-pad"
+              textAlign="right"
+              returnKeyType="next"
+              maxLength={16}
+            />
+          </View>
+
+          {/* العنوان المهيكل */}
           <View style={styles.card}>
             <View style={styles.fieldHeader}>
               <Ionicons name="location-outline" size={18} color={Colors.primary} />
@@ -91,15 +144,41 @@ export default function ShippingScreen() {
             </View>
             <TextInput
               style={styles.input}
-              placeholder="المدينة، الحي، الشارع، رقم المبنى..."
+              placeholder="المدينة"
               placeholderTextColor={Colors.textLight}
-              value={address}
-              onChangeText={setAddress}
+              value={city}
+              onChangeText={setCity}
               textAlign="right"
-              multiline
-              numberOfLines={3}
-              textAlignVertical="top"
               returnKeyType="next"
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="الحي"
+              placeholderTextColor={Colors.textLight}
+              value={district}
+              onChangeText={setDistrict}
+              textAlign="right"
+              returnKeyType="next"
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="الشارع"
+              placeholderTextColor={Colors.textLight}
+              value={street}
+              onChangeText={setStreet}
+              textAlign="right"
+              returnKeyType="next"
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="رقم المبنى"
+              placeholderTextColor={Colors.textLight}
+              value={buildingNumber}
+              onChangeText={setBuildingNumber}
+              keyboardType="number-pad"
+              textAlign="right"
+              returnKeyType="done"
+              maxLength={10}
             />
           </View>
 
@@ -217,7 +296,8 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
     borderWidth: 1,
     borderColor: Colors.border,
-    minHeight: 80,
+    minHeight: 48,
+    marginBottom: 10,
   },
   notesInput: { minHeight: 70 },
   // Bottom bar

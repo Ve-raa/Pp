@@ -28,6 +28,12 @@ export async function createOrder(data: {
   paymentMethod: string;
   promoCode?: string;
   address?: string;
+  fullName?: string;
+  phone?: string;
+  city?: string;
+  district?: string;
+  street?: string;
+  buildingNumber?: string;
   notes?: string;
 }): Promise<Order> {
   const res = await buyerPost<any>('/api/buyer/orders', data);
@@ -65,6 +71,16 @@ export async function initPayment(data: PaymentInitRequest): Promise<PaymentInit
   };
   if (data.address) {
     payload.shippingAddress = data.address;
+  }
+  for (const [key, value] of Object.entries({
+    fullName: data.fullName,
+    phone: data.phone,
+    city: data.city,
+    district: data.district,
+    street: data.street,
+    buildingNumber: data.buildingNumber,
+  })) {
+    if (value) payload[key] = value;
   }
 
   const methodMap: Record<string, string> = {

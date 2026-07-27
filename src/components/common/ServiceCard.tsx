@@ -90,7 +90,6 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
         style={[styles.featuredCard, style]}
       >
         <Image source={{ uri: imageUri }} style={styles.featuredImage} />
-        <View style={styles.featuredOverlay} />
         {discountPct > 0 && (
           <View style={styles.discountBadge}>
             <Text style={styles.discountText}>-{discountPct}%</Text>
@@ -233,14 +232,6 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   featuredImage: { width: '100%', height: 150, backgroundColor: Colors.lightPurple },
-  featuredOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 80,
-    backgroundColor: 'rgba(26,22,37,0.6)',
-  },
   featuredWishlist: {
     position: 'absolute',
     top: 10,
@@ -262,11 +253,28 @@ const styles = StyleSheet.create({
     color: Colors.textWhite,
     marginBottom: 4,
     textAlign: 'right',
+    textShadowColor: 'rgba(0,0,0,0.75)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
   },
   featuredBottom: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  featuredPrice: { fontFamily: 'Cairo_700Bold', fontSize: 14, color: Colors.accent },
+  featuredPrice: {
+    fontFamily: 'Cairo_700Bold',
+    fontSize: 14,
+    color: Colors.accent,
+    textShadowColor: 'rgba(0,0,0,0.65)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
   featuredRating: { flexDirection: 'row', alignItems: 'center', gap: 2 },
-  featuredRatingText: { fontFamily: 'Cairo_400Regular', fontSize: 11, color: Colors.textWhite80 },
+  featuredRatingText: {
+    fontFamily: 'Cairo_400Regular',
+    fontSize: 11,
+    color: Colors.textWhite80,
+    textShadowColor: 'rgba(0,0,0,0.65)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
 
   // Shared
   providerName: {

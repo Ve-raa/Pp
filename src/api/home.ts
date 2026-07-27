@@ -89,7 +89,7 @@ export async function getHomePageData(): Promise<HomePageData> {
     banners: (data.banners ?? []).map(mapBanner),
     featuredServices: (data.featuredServices ?? []).map(mapService),
     popularServices: (data.mostViewed ?? []).map(mapService),
-    recentServices: (data.bestSellers ?? []).map(mapService),
+    bestSellingServices: (data.bestSellers ?? []).map(mapService),
     topCategories: (data.categories ?? []).map(mapCategory),
     topProviders: (data.merchants ?? []).map(mapProvider),
   };

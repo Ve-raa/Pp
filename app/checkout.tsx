@@ -34,13 +34,30 @@ export default function CheckoutScreen() {
   const { buyerUser, buyerToken } = useAuthStore();
 
   // All hooks must be called before any conditional return (Rules of Hooks)
+  const params = useLocalSearchParams<{
+    fullName?: string;
+    phone?: string;
+    city?: string;
+    district?: string;
+    street?: string;
+    buildingNumber?: string;
+    notes?: string;
+  }>();
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethod>('stripe');
-  const params = useLocalSearchParams<{ address?: string; notes?: string }>();
+  const [fullName, setFullName] = useState(params.fullName ?? buyerUser?.name ?? '');
+  const [phone, setPhone] = useState(params.phone ?? buyerUser?.phone ?? '');
+  const [city, setCity] = useState(params.city ?? buyerUser?.city ?? '');
+  const [district, setDistrict] = useState(params.district ?? '');
+  const [street, setStreet] = useState(params.street ?? '');
+  const [buildingNumber, setBuildingNumber] = useState(params.buildingNumber ?? '');
+  const [notes, setNotes] = useState(params.notes ?? '');
   const [loading, setLoading] = useState(false);
 
-  const address = params.address ?? '';
-  const notes = params.notes ?? '';
   const orderTotal = total();
+
+  const address = [city, district, street, buildingNumber ? `مبنى ${buildingNumber}` : '']
+    .filter(Boolean)
+    .join('، ');
 
   if (!buyerToken) {
     return <LoginRequired title="تسجيل الدخول مطلوب للدفع" subtitle="سجّل دخولك لإتمام عملية الدفع وتأكيد طلبك" showBack />;
@@ -48,6 +65,12 @@ export default function CheckoutScreen() {
 
   const handlePlaceOrder = async () => {
     if (!items.length) return;
+    const normalizedPhone = phone.replace(/[\s()-]/g, '');
+    if (!fullName.trim() || !/^\+?[0-9]{8,15}$/.test(normalizedPhone) ||
+        !city.trim() || !district.trim() || !street.trim() || !buildingNumber.trim()) {
+      Alert.alert('بيانات التوصيل غير مكتملة', 'ارجع إلى معلومات التوصيل وأكمل جميع الحقول المطلوبة.');
+      return;
+    }
     setLoading(true);
     let createdOrderId: string | null = null;
     try {
@@ -60,7 +83,13 @@ export default function CheckoutScreen() {
               items: items.map((i) => ({ serviceId: i.serviceId, quantity: i.quantity, notes: i.notes })),
               paymentMethod: selectedPayment,
               promoCode: promoCode || undefined,
-              address: address.trim() || undefined,
+              address: address || undefined,
+              fullName: fullName.trim(),
+              phone: normalizedPhone,
+              city: city.trim(),
+              district: district.trim(),
+              street: street.trim(),
+              buildingNumber: buildingNumber.trim(),
               notes,
             })).id;
       if (selectedPayment !== 'stripe') {
@@ -73,7 +102,13 @@ export default function CheckoutScreen() {
           method: selectedPayment,
           amount: orderTotal,
           buyerId: buyerUser?.id ?? '',
-          address: address.trim() || undefined,
+          address: address || undefined,
+          fullName: fullName.trim(),
+          phone: normalizedPhone,
+          city: city.trim(),
+          district: district.trim(),
+          street: street.trim(),
+          buildingNumber: buildingNumber.trim(),
           returnUrl: `vera://payment/return?orderId=${paymentOrderId}`,
           cancelUrl: `vera://payment/cancel?orderId=${paymentOrderId}`,
         });
@@ -172,12 +207,37 @@ export default function CheckoutScreen() {
 
         {/* Shipping Address */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>عنوان التوصيل (اختياري)</Text>
+          <Text style={styles.cardTitle}>بيانات التوصيل</Text>
+          <TextInput
+            style={styles.singleLineInput}
+            value={fullName}
+            onChangeText={setFullName}
+            placeholder="الاسم الكامل"
+            placeholderTextColor={Colors.textLight}
+            textAlign="right"
+          />
+          <TextInput
+            style={styles.singleLineInput}
+            value={phone}
+            onChangeText={setPhone}
+            placeholder="رقم الهاتف"
+            placeholderTextColor={Colors.textLight}
+            keyboardType="phone-pad"
+            textAlign="right"
+          />
+          <TextInput
+            style={styles.singleLineInput}
+            value={address}
+            editable={false}
+            placeholder="العنوان"
+            placeholderTextColor={Colors.textLight}
+            textAlign="right"
+          />
           <TextInput
             style={styles.notesInput}
-            value={address}
-            onChangeText={setAddress}
-            placeholder="أدخل عنوانك الكامل..."
+            value={notes}
+            onChangeText={setNotes}
+            placeholder="ملاحظات التوصيل (اختياري)"
             placeholderTextColor={Colors.textLight}
             multiline
             textAlign="right"
@@ -215,20 +275,6 @@ export default function CheckoutScreen() {
               </TouchableOpacity>
             );
           })}
-        </View>
-
-        {/* Notes */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>ملاحظات (اختياري)</Text>
-          <TextInput
-            style={styles.notesInput}
-            value={notes}
-            onChangeText={setNotes}
-            placeholder="أي تعليمات خاصة للمزود..."
-            placeholderTextColor={Colors.textLight}
-            multiline
-            textAlign="right"
-          />
         </View>
 
         {/* Security note */}
@@ -275,6 +321,7 @@ const styles = StyleSheet.create({
   payIconCircle: { width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.lightPurple, alignItems: 'center', justifyContent: 'center' },
   payIconCircleActive: { backgroundColor: `${Colors.primary}15` },
   notesInput: { backgroundColor: Colors.lightPurple, borderRadius: 12, padding: 14, minHeight: 80, fontFamily: 'Cairo_400Regular', fontSize: 14, color: Colors.textPrimary, borderWidth: 1, borderColor: Colors.border },
+  singleLineInput: { backgroundColor: Colors.lightPurple, borderRadius: 12, padding: 14, minHeight: 48, marginBottom: 10, fontFamily: 'Cairo_400Regular', fontSize: 14, color: Colors.textPrimary, borderWidth: 1, borderColor: Colors.border },
   securityNote: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, margin: 16, marginTop: 12 },
   securityText: { fontFamily: 'Cairo_400Regular', fontSize: 12, color: Colors.textMuted },
   progressBar: {

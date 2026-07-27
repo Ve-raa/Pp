@@ -45,7 +45,7 @@ interface ProviderProfile {
 }
 
 async function getProviderProfile(id: string): Promise<ProviderProfile> {
-  const data = await publicGet<any>(`/api/providers/${id}`);
+  const data = await publicGet<any>(`/api/public/providers/${encodeURIComponent(id)}`);
   const p = data?.provider ?? data;
   return {
     id: String(p.id),
@@ -57,21 +57,23 @@ async function getProviderProfile(id: string): Promise<ProviderProfile> {
     reviewsCount: p.reviewsCount ?? p.review_count ?? 0,
     city: p.city,
     isVerified: p.verified ?? p.isVerified ?? false,
-    followersCount: p.followersCount ?? p.followers ?? 0,
-    viewsCount: p.viewsCount ?? p.views ?? 0,
+    followersCount: p.followersCount ?? p.followerCount ?? p.followers ?? 0,
+    viewsCount: p.viewsCount ?? p.totalViews ?? p.views ?? 0,
     completedOrders: p.completedOrders ?? p.completed_orders ?? 0,
-    servicesCount: p.servicesCount ?? p.services_count ?? 0,
+    servicesCount: p.servicesCount ?? p.serviceCount ?? p.services_count ?? 0,
     category: p.category ?? p.specialty,
-    services: (p.services ?? []).map((s: any): Service => ({
+    services: (data?.services ?? p.services ?? []).map((s: any): Service => ({
       id: String(s.id),
       title: s.title ?? s.name ?? '',
       price: Number(s.price ?? 0),
       currency: s.currency ?? 'AED',
-      images: s.image_url ? [fullUrl(s.image_url) as string] : [],
+      images: s.image_url || s.image ? [fullUrl(s.image_url ?? s.image) as string] : [],
       image: fullUrl(s.image_url ?? s.image),
       rating: Number(s.rating ?? 0),
-      reviewsCount: s.review_count ?? 0,
-      isAvailable: s.is_active ?? true,
+      reviewsCount: s.review_count ?? s.reviewCount ?? 0,
+      isAvailable: s.is_active ?? s.isActive ?? true,
+      categoryId: s.category_id ? String(s.category_id) : undefined,
+      subcategory: s.subcategory,
     })),
   };
 }
@@ -97,7 +99,7 @@ export default function ProviderProfileScreen() {
     }
   };
 
-  const { data: provider, isLoading } = useQuery({
+  const { data: provider, isLoading, isError, refetch } = useQuery({
     queryKey: ['provider', id],
     queryFn: () => getProviderProfile(id!),
     enabled: !!id,
@@ -118,13 +120,23 @@ export default function ProviderProfileScreen() {
     );
   }
 
-  if (!provider) {
+  if (isError || !provider) {
     return (
       <View style={styles.loadingContainer}>
-        <Text style={styles.errorText}>تعذّر تحميل بيانات التاجر</Text>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backFallback}>
-          <Text style={styles.backFallbackText}>رجوع</Text>
-        </TouchableOpacity>
+        <Ionicons name="cloud-offline-outline" size={42} color={Colors.primary} />
+        <Text style={styles.errorText}>
+          {isError ? 'تعذّر تحميل بيانات التاجر. تحقق من الاتصال وحاول مرة أخرى.' : 'لم يتم العثور على بيانات التاجر.'}
+        </Text>
+        <View style={styles.errorActions}>
+          {isError && (
+            <TouchableOpacity onPress={() => refetch()} style={styles.backFallback}>
+              <Text style={styles.backFallbackText}>إعادة المحاولة</Text>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity onPress={() => router.back()} style={styles.backFallbackSecondary}>
+            <Text style={styles.backFallbackSecondaryText}>رجوع</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
@@ -297,6 +309,15 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   backFallbackText: { fontFamily: 'Cairo_700Bold', fontSize: 14, color: '#fff' },
+  errorActions: { flexDirection: 'row', gap: 10, alignItems: 'center' },
+  backFallbackSecondary: {
+    borderWidth: 1,
+    borderColor: Colors.primary,
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 12,
+  },
+  backFallbackSecondaryText: { fontFamily: 'Cairo_700Bold', fontSize: 14, color: Colors.primary },
 
   // Cover
   coverWrapper: { position: 'relative' },

@@ -346,7 +346,7 @@ export default function HomeScreen() {
       {/* ── Best Sellers Slider ──────────────────────────────────────── */}
       <ServiceSlider
         title="الأكثر مبيعاً"
-        services={homeData?.recentServices ?? []}
+        services={homeData?.bestSellingServices ?? homeData?.recentServices ?? []}
         sectionBanners={bannersFor('best_sellers')}
         onSeeAll={() => router.push('/(buyer)/search')}
         onServicePress={(id) => router.push(`/service/${id}`)}

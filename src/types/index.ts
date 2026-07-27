@@ -110,6 +110,12 @@ export interface PaymentInitRequest {
   amount: number;
   buyerId: string;
   address?: string;
+  fullName?: string;
+  phone?: string;
+  city?: string;
+  district?: string;
+  street?: string;
+  buildingNumber?: string;
   returnUrl?: string;
   cancelUrl?: string;
 }
@@ -167,8 +173,10 @@ export interface HomePageData {
   banners?: Banner[];
   featuredServices?: Service[];
   popularServices?: Service[];
+  bestSellingServices?: Service[];
   topCategories?: Category[];
   topProviders?: ServiceProvider[];
+  /** @deprecated Use bestSellingServices. Kept for older screens. */
   recentServices?: Service[];
 }
 
@@ -191,15 +199,47 @@ export interface Cart {
   promoCode?: string;
 }
 
+export interface PromoCodeResponse {
+  isValid: boolean;
+  code: string;
+  discount: number;
+  type: 'percentage' | 'fixed';
+  message?: string;
+}
+
 // ─── Order Types ──────────────────────────────────────────────────────────────
+export type OrderStatus =
+  | 'pending'
+  | 'confirmed'
+  | 'in_progress'
+  | 'completed'
+  | 'cancelled'
+  | 'refunded';
+
+export interface OrderItem {
+  id: string;
+  serviceId?: string;
+  service?: Service;
+  price: number;
+  quantity: number;
+  notes?: string;
+}
+
 export interface Order {
   id: string;
+  orderNumber?: string;
   buyerId?: string;
   providerId?: string;
   serviceId?: string;
   service?: Service;
-  status: 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled';
+  status: OrderStatus;
   price: number;
+  total?: number;
+  subtotal?: number;
+  discount?: number;
+  items?: OrderItem[];
+  paymentMethod?: string;
+  paymentStatus?: 'pending' | 'paid' | 'failed' | 'refunded' | string;
   currency?: string;
   notes?: string;
   scheduledAt?: string;
@@ -230,9 +270,16 @@ export interface LoyaltyData {
   history?: LoyaltyTransaction[];
 }
 
+export interface LoyaltyInfo extends LoyaltyData {
+  tierName?: string;
+  totalEarned?: number;
+  totalRedeemed?: number;
+  pointsToNextTier?: number;
+}
+
 export interface LoyaltyTransaction {
   id: string;
-  type: 'earned' | 'redeemed' | 'expired';
+  type: 'earn' | 'earned' | 'redeemed' | 'expired';
   points: number;
   description: string;
   createdAt: string;
@@ -245,11 +292,23 @@ export interface WalletData {
   transactions?: WalletTransaction[];
 }
 
+export type Wallet = WalletData;
+
 export interface WalletTransaction {
   id: string;
   type: 'credit' | 'debit';
   amount: number;
   description: string;
+  createdAt: string;
+  balance?: number;
+}
+
+export interface Review {
+  id: string;
+  userName?: string;
+  userAvatar?: string;
+  rating: number;
+  comment?: string;
   createdAt: string;
 }
 
