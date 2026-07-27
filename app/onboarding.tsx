@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   Image,
-  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,15 +15,17 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { hapticImpact } from '../src/utils/haptics';
 import { Colors } from '../src/constants/colors';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const ONBOARDING_KEY = 'vera_onboarding_done';
+
+const APP_ICON = require('../assets/images/icon.png');
 
 const slides = [
   {
     id: '1',
     title: 'مرحباً بك في VÉRA',
     subtitle: 'منصة الخدمات المنزلية الأولى في الخليج — آلاف الخدمات بضغطة واحدة',
-    icon: 'home',
+    icon: 'home' as const,
     bg: Colors.primary,
     accent: Colors.primaryLight,
   },
@@ -32,7 +33,7 @@ const slides = [
     id: '2',
     title: 'تسوق بثقة واطمئنان',
     subtitle: 'مزودو خدمة معتمدون، تقييمات حقيقية، ودفع آمن عبر Stripe وTabby وTamara',
-    icon: 'shield-checkmark',
+    icon: 'shield-checkmark' as const,
     bg: Colors.accent,
     accent: '#f472b6',
   },
@@ -40,7 +41,7 @@ const slides = [
     id: '3',
     title: 'تتبع طلباتك لحظة بلحظة',
     subtitle: 'إشعارات فورية، تتبع مباشر، وبرنامج ولاء حصري يكافئك على كل طلب',
-    icon: 'location',
+    icon: 'location' as const,
     bg: Colors.purpleGradientStart,
     accent: Colors.purpleGradientEnd,
   },
@@ -74,8 +75,17 @@ export default function OnboardingScreen() {
 
   const renderSlide = ({ item }: { item: typeof slides[0] }) => (
     <View style={[styles.slide, { width: SCREEN_WIDTH }]}>
-      <View style={[styles.iconCircle, { backgroundColor: `${item.accent}40` }]}>
-        <Ionicons name={item.icon as any} size={80} color="#fff" />
+      {/* App icon at top of each slide */}
+      <View style={styles.iconWrapper}>
+        <Image
+          source={APP_ICON}
+          style={styles.appIcon}
+          resizeMode="contain"
+        />
+      </View>
+      {/* Secondary Ionicon badge */}
+      <View style={[styles.badgeCircle, { backgroundColor: `${item.accent}50` }]}>
+        <Ionicons name={item.icon} size={28} color="#fff" />
       </View>
       <Text style={styles.title}>{item.title}</Text>
       <Text style={styles.subtitle}>{item.subtitle}</Text>
@@ -150,15 +160,32 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 40,
   },
-  iconCircle: {
-    width: 160,
-    height: 160,
-    borderRadius: 80,
+  iconWrapper: {
+    width: 200,
+    height: 200,
+    borderRadius: 40,
+    overflow: 'hidden',
+    marginBottom: 16,
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowOffset: { width: 0, height: 8 },
+    shadowRadius: 20,
+    elevation: 12,
+  },
+  appIcon: {
+    width: 200,
+    height: 200,
+  },
+  badgeCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 40,
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.3)',
+    marginBottom: 28,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.4)',
   },
   title: {
     fontFamily: 'Cairo_700Bold',
