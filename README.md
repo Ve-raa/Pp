@@ -13,8 +13,8 @@
 
 ```bash
 # 1. نسخ المستودع
-git clone https://github.com/khalednaqib7-sketch/vera.git
-cd vera
+git clone https://github.com/Ve-raa/Pp.git
+cd Pp
 
 # 2. تثبيت الاعتماديات
 npm install
