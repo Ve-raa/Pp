@@ -17,6 +17,7 @@ import { useQuery } from '@tanstack/react-query';
 import { publicGet, buyerPost } from '../../src/api/client';
 import { Colors } from '../../src/constants/colors';
 import { ServiceCard } from '../../src/components/common/ServiceCard';
+import { useAuthStore } from '../../src/store/authStore';
 import type { Service, ServiceProvider } from '../../src/types';
 
 const { width: W } = Dimensions.get('window');
@@ -51,7 +52,10 @@ async function getProviderProfile(id: string): Promise<ProviderProfile> {
     id: String(p.id),
     name: p.name ?? '',
     avatar: fullUrl(p.avatar ?? p.logo_url),
-    coverImage: fullUrl(p.cover_image ?? p.cover),
+    // Bug 1 fix: try all possible field names the API might use for cover image
+    coverImage: fullUrl(
+      p.cover_image ?? p.coverImage ?? p.cover ?? p.banner_image ?? p.banner ?? p.header_image ?? p.profile_cover
+    ),
     bio: p.bio ?? p.description,
     rating: Number(p.rating ?? 0),
     reviewsCount: p.reviewsCount ?? p.review_count ?? 0,
@@ -85,7 +89,15 @@ export default function ProviderProfileScreen() {
   const [following, setFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
 
+  // Bug 4 fix: read auth state to check if user is logged in
+  const { buyerToken } = useAuthStore();
+
   const handleFollowToggle = async () => {
+    // Bug 4 fix: redirect to login if user is not authenticated
+    if (!buyerToken) {
+      router.push('/(auth)/login');
+      return;
+    }
     if (followLoading || !id) return;
     const newVal = !following;
     setFollowing(newVal); // optimistic update
@@ -164,7 +176,10 @@ export default function ProviderProfileScreen() {
               styles.coverFallback,
               { height: 180 + insets.top, paddingTop: insets.top },
             ]}
-          />
+          >
+            {/* Bug 1 fix: placeholder icon when no cover image */}
+            <Ionicons name="image-outline" size={48} color="rgba(255,255,255,0.4)" />
+          </View>
         )}
         {/* Back button */}
         <TouchableOpacity
@@ -322,7 +337,12 @@ const styles = StyleSheet.create({
   // Cover
   coverWrapper: { position: 'relative' },
   cover: { width: '100%', backgroundColor: Colors.lightPurple },
-  coverFallback: { width: '100%', backgroundColor: Colors.primary },
+  coverFallback: {
+    width: '100%',
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   backBtn: {
     position: 'absolute',
     right: 16,
