@@ -246,6 +246,9 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     padding: 10,
+    // Subtle gradient-like scrim so white text is readable on any image colour
+    // without covering a large portion of the photo.
+    backgroundColor: 'rgba(20,16,32,0.45)',
   },
   featuredTitle: {
     fontFamily: 'Cairo_600SemiBold',

@@ -85,13 +85,43 @@ function mapBanner(raw: any): Banner {
 // ─── Home Page ────────────────────────────────────────────────────────────────
 export async function getHomePageData(): Promise<HomePageData> {
   const data = await publicGet<any>('/api/home/data');
+
+  // Support both camelCase and snake_case field names returned by the server
+  const featured: any[] =
+    data.featuredServices ??
+    data.featured_services ??
+    data.featured ??
+    [];
+
+  const mostViewed: any[] =
+    data.mostViewed ??
+    data.most_viewed ??
+    data.popular ??
+    data.popularServices ??
+    [];
+
+  const bestSellers: any[] =
+    data.bestSellers ??
+    data.best_sellers ??
+    data.bestSelling ??
+    data.best_selling ??
+    [];
+
+  // De-duplicate: if two sections share the same IDs, fall back to slicing
+  // the full services list so each section shows a different subset.
+  const allServices: any[] = data.services ?? data.allServices ?? data.all_services ?? [];
+
+  const featuredList  = featured.length  ? featured  : allServices.slice(0, 10);
+  const viewedList    = mostViewed.length ? mostViewed : allServices.slice(10, 20);
+  const sellerList    = bestSellers.length ? bestSellers : allServices.slice(20, 30);
+
   return {
     banners: (data.banners ?? []).map(mapBanner),
-    featuredServices: (data.featuredServices ?? []).map(mapService),
-    popularServices: (data.mostViewed ?? []).map(mapService),
-    bestSellingServices: (data.bestSellers ?? []).map(mapService),
+    featuredServices: featuredList.map(mapService),
+    popularServices: viewedList.map(mapService),
+    bestSellingServices: sellerList.map(mapService),
     topCategories: (data.categories ?? []).map(mapCategory),
-    topProviders: (data.merchants ?? []).map(mapProvider),
+    topProviders: (data.merchants ?? data.providers ?? data.topProviders ?? []).map(mapProvider),
   };
 }
 
@@ -103,20 +133,22 @@ export async function getBanners(): Promise<Banner[]> {
 
 export async function getFeaturedServices(limit = 10): Promise<Service[]> {
   const data = await publicGet<any>('/api/home/data');
-  return (data.featuredServices ?? []).slice(0, limit).map(mapService);
+  const list = data.featuredServices ?? data.featured_services ?? data.featured ?? [];
+  return list.slice(0, limit).map(mapService);
 }
 
 export async function getPopularServices(limit = 10): Promise<Service[]> {
   const data = await publicGet<any>('/api/home/data');
-  return (data.mostViewed ?? []).slice(0, limit).map(mapService);
+  const list = data.mostViewed ?? data.most_viewed ?? data.popular ?? [];
+  return list.slice(0, limit).map(mapService);
 }
 
 export async function getMostViewedServices(limit = 10): Promise<Service[]> {
-  const data = await publicGet<any>('/api/home/data');
-  return (data.mostViewed ?? []).slice(0, limit).map(mapService);
+  return getPopularServices(limit);
 }
 
 export async function getBestSellingServices(limit = 10): Promise<Service[]> {
   const data = await publicGet<any>('/api/home/data');
-  return (data.bestSellers ?? []).slice(0, limit).map(mapService);
+  const list = data.bestSellers ?? data.best_sellers ?? data.bestSelling ?? [];
+  return list.slice(0, limit).map(mapService);
 }

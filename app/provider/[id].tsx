@@ -46,7 +46,26 @@ interface ProviderProfile {
 }
 
 async function getProviderProfile(id: string): Promise<ProviderProfile> {
-  const data = await publicGet<any>(`/api/public/providers/${encodeURIComponent(id)}`);
+  // Try multiple endpoint paths — the API may be on any of these routes
+  const ENDPOINTS = [
+    `/api/public/providers/${encodeURIComponent(id)}`,
+    `/api/public/merchants/${encodeURIComponent(id)}`,
+    `/api/providers/${encodeURIComponent(id)}`,
+    `/api/merchants/${encodeURIComponent(id)}`,
+  ];
+
+  let data: any = null;
+  let lastError: unknown = null;
+  for (const endpoint of ENDPOINTS) {
+    try {
+      data = await publicGet<any>(endpoint);
+      if (data && (data.provider || data.id || data.name)) break;
+    } catch (err) {
+      lastError = err;
+    }
+  }
+  if (!data) throw lastError ?? new Error('تعذّر تحميل بيانات التاجر');
+
   const p = data?.provider ?? data;
   return {
     id: String(p.id),
@@ -171,14 +190,21 @@ export default function ProviderProfileScreen() {
             resizeMode="cover"
           />
         ) : (
+          /* Stylised placeholder: gradient-inspired two-tone band */
           <View
             style={[
               styles.coverFallback,
               { height: 180 + insets.top, paddingTop: insets.top },
             ]}
           >
-            {/* Bug 1 fix: placeholder icon when no cover image */}
-            <Ionicons name="image-outline" size={48} color="rgba(255,255,255,0.4)" />
+            <View style={styles.coverFallbackInner}>
+              <View style={styles.coverLogoCircle}>
+                <Text style={styles.coverLogoText}>V</Text>
+              </View>
+              <Text style={styles.coverFallbackName} numberOfLines={1}>
+                {provider.name}
+              </Text>
+            </View>
           </View>
         )}
         {/* Back button */}
@@ -339,9 +365,35 @@ const styles = StyleSheet.create({
   cover: { width: '100%', backgroundColor: Colors.lightPurple },
   coverFallback: {
     width: '100%',
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.purpleDark,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  coverFallbackInner: {
+    alignItems: 'center',
+    gap: 8,
+  },
+  coverLogoCircle: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  coverLogoText: {
+    fontFamily: 'Cairo_700Bold',
+    fontSize: 28,
+    color: '#fff',
+  },
+  coverFallbackName: {
+    fontFamily: 'Cairo_600SemiBold',
+    fontSize: 15,
+    color: 'rgba(255,255,255,0.85)',
+    maxWidth: 200,
+    textAlign: 'center',
   },
   backBtn: {
     position: 'absolute',
