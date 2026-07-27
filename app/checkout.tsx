@@ -33,15 +33,18 @@ export default function CheckoutScreen() {
   const { items, total, promoCode, clearCart } = useCartStore();
   const { buyerUser, buyerToken } = useAuthStore();
 
+  // All hooks must be called before any conditional return (Rules of Hooks)
+  const [selectedPayment, setSelectedPayment] = useState<PaymentMethod>('stripe');
+  const params = useLocalSearchParams<{ address?: string; notes?: string }>();
+  const [loading, setLoading] = useState(false);
+
+  const address = params.address ?? '';
+  const notes = params.notes ?? '';
+  const orderTotal = total();
+
   if (!buyerToken) {
     return <LoginRequired title="تسجيل الدخول مطلوب للدفع" subtitle="سجّل دخولك لإتمام عملية الدفع وتأكيد طلبك" showBack />;
   }
-  const [selectedPayment, setSelectedPayment] = useState<PaymentMethod>('stripe');
-  const params = useLocalSearchParams<{ address?: string; notes?: string }>();
-  const address = params.address ?? '';
-  const notes = params.notes ?? '';
-  const [loading, setLoading] = useState(false);
-  const orderTotal = total();
 
   const handlePlaceOrder = async () => {
     if (!items.length) return;

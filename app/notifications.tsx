@@ -24,10 +24,7 @@ export default function NotificationsScreen() {
     enabled: !!buyerToken,
   });
 
-  if (!buyerToken) {
-    return <LoginRequired title="سجّل دخولك لعرض إشعاراتك" subtitle="تابع تحديثات طلباتك والعروض الخاصة بعد تسجيل الدخول" showBack />;
-  }
-
+  // Must be declared before any conditional return (Rules of Hooks)
   const markAllMutation = useMutation({
     mutationFn: markAllNotificationsRead,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
@@ -37,6 +34,10 @@ export default function NotificationsScreen() {
     mutationFn: markNotificationRead,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
   });
+
+  if (!buyerToken) {
+    return <LoginRequired title="سجّل دخولك لعرض إشعاراتك" subtitle="تابع تحديثات طلباتك والعروض الخاصة بعد تسجيل الدخول" showBack />;
+  }
 
   const notifications = data?.notifications || [];
   const unreadCount = data?.unreadCount || 0;

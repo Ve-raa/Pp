@@ -31,10 +31,7 @@ export default function LoyaltyScreen() {
     enabled: !!buyerToken,
   });
 
-  if (!buyerToken) {
-    return <LoginRequired title="سجّل دخولك لعرض نقاطك" subtitle="اكسب نقاط الولاء واستردّها مع كل طلب بعد تسجيل الدخول" showBack />;
-  }
-
+  // Must be called before any conditional return (Rules of Hooks)
   const redeemMutation = useMutation({
     mutationFn: () => redeemLoyaltyPoints(loyalty?.points || 0),
     onSuccess: (res) => {
@@ -43,6 +40,10 @@ export default function LoyaltyScreen() {
     },
     onError: () => Alert.alert('خطأ', 'تعذّر استرداد النقاط'),
   });
+
+  if (!buyerToken) {
+    return <LoginRequired title="سجّل دخولك لعرض نقاطك" subtitle="اكسب نقاط الولاء واستردّها مع كل طلب بعد تسجيل الدخول" showBack />;
+  }
 
   const tierColor = TIER_COLORS[loyalty?.tier?.toLowerCase() || 'bronze'] || Colors.primary;
   const progress = loyalty?.pointsToNextTier

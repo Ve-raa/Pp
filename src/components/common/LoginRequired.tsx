@@ -28,7 +28,7 @@ export function LoginRequired({
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       {showBack && (
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+        <TouchableOpacity style={[styles.backBtn, { top: insets.top + 4 }]} onPress={() => router.back()}>
           <Ionicons name="chevron-forward" size={24} color={Colors.purpleDark} />
         </TouchableOpacity>
       )}
