@@ -41,16 +41,16 @@ const SORT_OPTIONS = [
   { label: 'الأغلى', value: 'price_desc' },
 ];
 
-// ألوان متناوبة لبطاقات التصنيف الفرعي
+// Bug 3 fix: ألوان أفتح وأخف للبطاقات مع الحفاظ على وضوح النص الأبيض
 const SUBCAT_COLORS = [
-  Colors.primary,
-  Colors.purpleDark,
-  Colors.purpleMid,
-  '#7C5CBF',
-  '#5B8AF5',
-  '#E0667A',
-  '#4CAF88',
-  '#E08B44',
+  '#818cf8', // indigo فاتح (بدلاً من #6366f1 الداكن)
+  '#7c6fa8', // بنفسجي فاتح (بدلاً من #4A3F6B الداكن جداً)
+  '#9b8bcf', // بنفسجي متوسط فاتح (بدلاً من #6C5AA8)
+  '#a07ed4', // بنفسجي فاتح (بدلاً من #7C5CBF)
+  '#7ba8f7', // أزرق فاتح (بدلاً من #5B8AF5)
+  '#e88fa0', // وردي فاتح (بدلاً من #E0667A)
+  '#6fc4a3', // أخضر فاتح (بدلاً من #4CAF88)
+  '#f0a86a', // برتقالي فاتح (بدلاً من #E08B44)
 ];
 
 export default function CategoryScreen() {
@@ -105,8 +105,6 @@ export default function CategoryScreen() {
   }
 
   // ─── صفحة وسيطة: التصنيفات الفرعية كأيقونات ─────────────────────────────
-  // تُعرض عندما: توجد تصنيفات فرعية ولم يُختر أي منها بعد
-  // الصفحة الوسيطة تظهر دائماً لكل قسم (حتى بدون تصنيفات فرعية)
   if (!selectedSubcat) {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -119,8 +117,9 @@ export default function CategoryScreen() {
           <Text style={styles.subcatTitle}>اختر تصنيفاً</Text>
 
           {/* زر "الكل" يعرض جميع الخدمات */}
+          {/* Bug 3 fix: استخدام لون أفتح لبطاقة "جميع الخدمات" */}
           <TouchableOpacity
-            style={[styles.subcatCard, { backgroundColor: Colors.purpleDark }]}
+            style={[styles.subcatCard, { backgroundColor: '#818cf8' }]}
             onPress={() => setSelectedSubcat('__all__')}
             activeOpacity={0.8}
           >
