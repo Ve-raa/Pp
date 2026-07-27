@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Image, TouchableOpacity,
   FlatList, Alert, ActivityIndicator, Dimensions, Modal, Pressable,
@@ -26,8 +26,10 @@ export default function ServiceDetailScreen() {
   const [wishlisted, setWishlisted] = useState(false);
   const [activeImage, setActiveImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
-  // Bug 5 fix: state for custom login-required modal
   const [showLoginModal, setShowLoginModal] = useState(false);
+
+  // Ref for the image carousel ScrollView
+  const carouselRef = useRef<ScrollView>(null);
 
   const { data: service, isLoading } = useQuery({
     queryKey: ['service', id],
@@ -52,7 +54,6 @@ export default function ServiceDetailScreen() {
   const handleAddToCart = () => {
     if (!service) return;
     if (!buyerToken) {
-      // Bug 5 fix: show custom branded modal instead of system Alert
       setShowLoginModal(true);
       return;
     }
@@ -62,6 +63,12 @@ export default function ServiceDetailScreen() {
       { text: 'متابعة التسوق' },
       { text: 'عرض السلة', onPress: () => router.push('/(buyer)/cart') },
     ]);
+  };
+
+  // Navigate carousel to a specific index
+  const goToImage = (index: number) => {
+    carouselRef.current?.scrollTo({ x: index * W, animated: true });
+    setActiveImage(index);
   };
 
   if (isLoading) {
@@ -91,7 +98,7 @@ export default function ServiceDetailScreen() {
 
   return (
     <View style={[styles.container, { paddingBottom: insets.bottom + 80 }]}>
-      {/* Bug 5 fix: Custom login-required modal */}
+      {/* Custom login-required modal */}
       <Modal
         visible={showLoginModal}
         transparent
@@ -101,21 +108,14 @@ export default function ServiceDetailScreen() {
       >
         <Pressable style={styles.modalOverlay} onPress={() => setShowLoginModal(false)}>
           <Pressable style={styles.modalBox} onPress={() => {}}>
-            {/* Icon */}
             <View style={styles.modalIconCircle}>
               <Ionicons name="lock-closed-outline" size={36} color={Colors.primary} />
             </View>
-
-            {/* Brand */}
             <Text style={styles.modalBrand}>VÉRA</Text>
-
-            {/* Title */}
             <Text style={styles.modalTitle}>تسجيل الدخول مطلوب</Text>
             <Text style={styles.modalSubtitle}>
               سجّل دخولك لإضافة الخدمة إلى سلتك والاستمتاع بجميع المميزات
             </Text>
-
-            {/* Buttons */}
             <TouchableOpacity
               style={styles.modalLoginBtn}
               activeOpacity={0.85}
@@ -126,7 +126,6 @@ export default function ServiceDetailScreen() {
             >
               <Text style={styles.modalLoginBtnText}>تسجيل الدخول</Text>
             </TouchableOpacity>
-
             <TouchableOpacity
               style={styles.modalCancelBtn}
               activeOpacity={0.7}
@@ -156,31 +155,81 @@ export default function ServiceDetailScreen() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Images */}
+        {/* ── Image Carousel ──────────────────────────────────────── */}
         {images.length > 0 ? (
-          <View>
-            <FlatList
-              data={images}
+          <View style={styles.carouselWrapper}>
+            {/* Scrollable images */}
+            <ScrollView
+              ref={carouselRef}
               horizontal
               pagingEnabled
               showsHorizontalScrollIndicator={false}
-              keyExtractor={(_, i) => i.toString()}
-              onMomentumScrollEnd={(e) =>
-                setActiveImage(Math.round(e.nativeEvent.contentOffset.x / W))
-              }
-              renderItem={({ item }) => (
-                <Image source={{ uri: item }} style={[styles.mainImage, { width: W }]} />
-              )}
-            />
-            {images.length > 1 && (
-              <View style={styles.imageDots}>
-                {images.map((_, i) => (
+              scrollEventThrottle={16}
+              decelerationRate="fast"
+              onMomentumScrollEnd={(e) => {
+                const index = Math.round(e.nativeEvent.contentOffset.x / W);
+                setActiveImage(index);
+              }}
+            >
+              {images.map((img, i) => (
+                <Image
+                  key={i}
+                  source={{ uri: img }}
+                  style={[styles.mainImage, { width: W }]}
+                  resizeMode="cover"
+                />
+              ))}
+            </ScrollView>
+
+            {/* Dot indicators — always shown, reflect real count */}
+            <View style={styles.dotsRow}>
+              {images.map((_, i) => (
+                <TouchableOpacity
+                  key={i}
+                  onPress={() => goToImage(i)}
+                  hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+                >
                   <View
-                    key={i}
-                    style={[styles.imageDot, i === activeImage && styles.imageDotActive]}
+                    style={[
+                      styles.dot,
+                      i === activeImage ? styles.dotActive : styles.dotInactive,
+                    ]}
                   />
-                ))}
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Counter badge — only when more than 1 image */}
+            {images.length > 1 && (
+              <View style={styles.counterBadge}>
+                <Text style={styles.counterText}>
+                  {activeImage + 1} / {images.length}
+                </Text>
               </View>
+            )}
+
+            {/* Prev / Next arrows — only when more than 1 image */}
+            {images.length > 1 && (
+              <>
+                {activeImage > 0 && (
+                  <TouchableOpacity
+                    style={[styles.arrowBtn, styles.arrowRight]}
+                    onPress={() => goToImage(activeImage - 1)}
+                    activeOpacity={0.8}
+                  >
+                    <Ionicons name="chevron-forward" size={20} color="#fff" />
+                  </TouchableOpacity>
+                )}
+                {activeImage < images.length - 1 && (
+                  <TouchableOpacity
+                    style={[styles.arrowBtn, styles.arrowLeft]}
+                    onPress={() => goToImage(activeImage + 1)}
+                    activeOpacity={0.8}
+                  >
+                    <Ionicons name="chevron-back" size={20} color="#fff" />
+                  </TouchableOpacity>
+                )}
+              </>
             )}
           </View>
         ) : (
@@ -350,7 +399,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   backBtn: { position: 'absolute', top: 16, right: 16, zIndex: 10 },
-  backCircle: { backgroundColor: Colors.cardBg, borderRadius: 20, padding: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 4, elevation: 3 },
+  backCircle: {
+    backgroundColor: Colors.cardBg,
+    borderRadius: 20,
+    padding: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+  },
   floatBtn: {
     width: 40,
     height: 40,
@@ -365,24 +423,131 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   floatBtnActive: { backgroundColor: Colors.errorLight },
-  mainImage: { height: 300, backgroundColor: Colors.lightPurple },
-  placeholderImage: { alignItems: 'center', justifyContent: 'center' },
-  imageDots: { flexDirection: 'row', justifyContent: 'center', gap: 6, position: 'absolute', bottom: 12, left: 0, right: 0 },
-  imageDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.5)' },
-  imageDotActive: { width: 18, backgroundColor: '#fff' },
+
+  // ── Carousel ──────────────────────────────────────────────────────────────────
+  carouselWrapper: {
+    position: 'relative',
+    height: 300,
+    backgroundColor: Colors.lightPurple,
+  },
+  mainImage: {
+    height: 300,
+    backgroundColor: Colors.lightPurple,
+  },
+  placeholderImage: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // Dots
+  dotsRow: {
+    position: 'absolute',
+    bottom: 12,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 6,
+  },
+  dot: {
+    borderRadius: 4,
+    height: 7,
+  },
+  dotActive: {
+    width: 22,
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  dotInactive: {
+    width: 7,
+    backgroundColor: 'rgba(255,255,255,0.5)',
+  },
+
+  // Counter badge
+  counterBadge: {
+    position: 'absolute',
+    bottom: 12,
+    left: 14,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    borderRadius: 10,
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+  },
+  counterText: {
+    fontFamily: 'Cairo_600SemiBold',
+    fontSize: 12,
+    color: '#fff',
+  },
+
+  // Prev / Next arrows
+  arrowBtn: {
+    position: 'absolute',
+    top: '50%',
+    marginTop: -18,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  arrowRight: { right: 10 },
+  arrowLeft:  { left: 10 },
+
+  // ── Content ───────────────────────────────────────────────────────────────────
   loadingContent: { padding: 16 },
   content: { padding: 16 },
-  titleRow: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'flex-start', gap: 8, marginBottom: 8 },
-  title: { fontFamily: 'Cairo_700Bold', fontSize: 22, color: Colors.textPrimary, flex: 1, textAlign: 'right' },
-  discountBadge: { backgroundColor: Colors.accent, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 4, alignSelf: 'flex-start' },
+  titleRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'flex-start',
+    gap: 8,
+    marginBottom: 8,
+  },
+  title: {
+    fontFamily: 'Cairo_700Bold',
+    fontSize: 22,
+    color: Colors.textPrimary,
+    flex: 1,
+    textAlign: 'right',
+  },
+  discountBadge: {
+    backgroundColor: Colors.accent,
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    alignSelf: 'flex-start',
+  },
   discountText: { fontFamily: 'Cairo_700Bold', fontSize: 12, color: '#fff' },
-  metaRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 8, marginBottom: 12 },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 8,
+    marginBottom: 12,
+  },
   ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   ratingText: { fontFamily: 'Cairo_600SemiBold', fontSize: 14, color: Colors.purpleDark },
   reviewCount: { fontFamily: 'Cairo_400Regular', fontSize: 13, color: Colors.textMuted },
-  priceRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16, justifyContent: 'flex-end' },
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 16,
+    justifyContent: 'flex-end',
+  },
   price: { fontFamily: 'Cairo_700Bold', fontSize: 26, color: Colors.primary },
-  originalPrice: { fontFamily: 'Cairo_400Regular', fontSize: 16, color: Colors.textMuted, textDecorationLine: 'line-through' },
+  originalPrice: {
+    fontFamily: 'Cairo_400Regular',
+    fontSize: 16,
+    color: Colors.textMuted,
+    textDecorationLine: 'line-through',
+  },
   providerCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -392,7 +557,14 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 16,
   },
-  providerAvatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.primary, alignItems: 'center', justifyContent: 'center' },
+  providerAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   providerAvatarImg: { width: 44, height: 44, borderRadius: 22 },
   providerAvatarText: { fontFamily: 'Cairo_700Bold', fontSize: 18, color: '#fff' },
   providerInfo: { alignItems: 'flex-end' },
@@ -400,21 +572,67 @@ const styles = StyleSheet.create({
   verifiedBadge: { flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 2 },
   verifiedText: { fontFamily: 'Cairo_400Regular', fontSize: 11, color: Colors.success },
   descSection: { marginBottom: 16 },
-  sectionTitle: { fontFamily: 'Cairo_700Bold', fontSize: 16, color: Colors.textPrimary, textAlign: 'right', marginBottom: 8 },
-  description: { fontFamily: 'Cairo_400Regular', fontSize: 14, color: Colors.textSecondary, lineHeight: 24, textAlign: 'right' },
+  sectionTitle: {
+    fontFamily: 'Cairo_700Bold',
+    fontSize: 16,
+    color: Colors.textPrimary,
+    textAlign: 'right',
+    marginBottom: 8,
+  },
+  description: {
+    fontFamily: 'Cairo_400Regular',
+    fontSize: 14,
+    color: Colors.textSecondary,
+    lineHeight: 24,
+    textAlign: 'right',
+  },
   detailsGrid: { flexDirection: 'row', gap: 10, marginBottom: 16 },
-  detailItem: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: Colors.lightPurple, borderRadius: 12, padding: 10, justifyContent: 'flex-end' },
+  detailItem: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: Colors.lightPurple,
+    borderRadius: 12,
+    padding: 10,
+    justifyContent: 'flex-end',
+  },
   detailValue: { fontFamily: 'Cairo_600SemiBold', fontSize: 13, color: Colors.textPrimary },
   reviewsSection: { marginBottom: 8 },
-  reviewCard: { backgroundColor: Colors.lightPurple, borderRadius: 14, padding: 12, marginBottom: 10 },
-  reviewHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
+  reviewCard: {
+    backgroundColor: Colors.lightPurple,
+    borderRadius: 14,
+    padding: 12,
+    marginBottom: 10,
+  },
+  reviewHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
   reviewUser: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   reviewName: { fontFamily: 'Cairo_600SemiBold', fontSize: 13, color: Colors.textPrimary },
-  reviewAvatar: { width: 30, height: 30, borderRadius: 15, backgroundColor: Colors.primary, alignItems: 'center', justifyContent: 'center' },
+  reviewAvatar: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   reviewAvatarText: { fontFamily: 'Cairo_700Bold', fontSize: 13, color: '#fff' },
   reviewDate: { fontFamily: 'Cairo_400Regular', fontSize: 11, color: Colors.textMuted },
   reviewStars: { flexDirection: 'row', gap: 2, marginBottom: 6, justifyContent: 'flex-end' },
-  reviewComment: { fontFamily: 'Cairo_400Regular', fontSize: 13, color: Colors.textSecondary, textAlign: 'right', lineHeight: 22 },
+  reviewComment: {
+    fontFamily: 'Cairo_400Regular',
+    fontSize: 13,
+    color: Colors.textSecondary,
+    textAlign: 'right',
+    lineHeight: 22,
+  },
+
+  // Bottom bar
   bottomBar: {
     position: 'absolute',
     bottom: 0,
@@ -444,11 +662,24 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
   },
-  qtyBtn: { width: 28, height: 28, borderRadius: 8, backgroundColor: Colors.cardBg, alignItems: 'center', justifyContent: 'center' },
-  qtyText: { fontFamily: 'Cairo_700Bold', fontSize: 15, color: Colors.textPrimary, minWidth: 22, textAlign: 'center' },
+  qtyBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: Colors.cardBg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  qtyText: {
+    fontFamily: 'Cairo_700Bold',
+    fontSize: 15,
+    color: Colors.textPrimary,
+    minWidth: 22,
+    textAlign: 'center',
+  },
   addBtn: { flex: 0, minWidth: 118 },
 
-  // Bug 5: Custom login modal styles
+  // Login modal
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(26,22,37,0.55)',
