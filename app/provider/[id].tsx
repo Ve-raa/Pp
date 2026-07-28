@@ -241,9 +241,6 @@ export default function ProviderProfileScreen() {
               <View style={styles.coverLogoCircle}>
                 <Text style={styles.coverLogoText}>V</Text>
               </View>
-              <Text style={styles.coverFallbackName} numberOfLines={1}>
-                {provider.name}
-              </Text>
             </View>
           </View>
         )}
@@ -284,7 +281,7 @@ export default function ProviderProfileScreen() {
 
           <Text style={styles.name}>{provider.name}</Text>
 
-          {provider.category && (
+          {provider.category && provider.category.trim() !== provider.name.trim() && (
             <View style={styles.categoryTag}>
               <Text style={styles.categoryText}>{provider.category}</Text>
             </View>
