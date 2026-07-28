@@ -29,7 +29,7 @@ export default function ServiceDetailScreen() {
   const [showLoginModal, setShowLoginModal] = useState(false);
 
   // Ref for the image carousel ScrollView
-  const carouselRef = useRef<ScrollView>(null);
+  const carouselRef = useRef<FlatList<string>>(null);
 
   const { data: service, isLoading } = useQuery({
     queryKey: ['service', id],
@@ -67,7 +67,7 @@ export default function ServiceDetailScreen() {
 
   // Navigate carousel to a specific index
   const goToImage = (index: number) => {
-    carouselRef.current?.scrollTo({ x: index * W, animated: true });
+    carouselRef.current?.scrollToIndex({ index, animated: true });
     setActiveImage(index);
   };
 
@@ -158,48 +158,49 @@ export default function ServiceDetailScreen() {
         {/* ── Image Carousel ──────────────────────────────────────── */}
         {images.length > 0 ? (
           <View style={styles.carouselWrapper}>
-            {/* Scrollable images */}
-            <ScrollView
+            <FlatList
               ref={carouselRef}
+              data={images}
               horizontal
               pagingEnabled
-              nestedScrollEnabled
-              style={{ width: W }}
               showsHorizontalScrollIndicator={false}
-              scrollEventThrottle={16}
-              decelerationRate="fast"
+              keyExtractor={(_, i) => String(i)}
+              renderItem={({ item }) => (
+                <Image
+                  source={{ uri: item }}
+                  style={[styles.mainImage, { width: W }]}
+                  resizeMode="cover"
+                />
+              )}
+              getItemLayout={(_, index) => ({ length: W, offset: W * index, index })}
               onMomentumScrollEnd={(e) => {
                 const index = Math.round(e.nativeEvent.contentOffset.x / W);
                 setActiveImage(index);
               }}
-            >
-              {images.map((img, i) => (
-                <Image
-                  key={i}
-                  source={{ uri: img }}
-                  style={[styles.mainImage, { width: W }]}
-                  resizeMode="cover"
-                />
-              ))}
-            </ScrollView>
+              scrollEventThrottle={16}
+              decelerationRate="fast"
+              bounces={false}
+            />
 
-            {/* Dot indicators — always shown, reflect real count */}
-            <View style={styles.dotsRow}>
-              {images.map((_, i) => (
-                <TouchableOpacity
-                  key={i}
-                  onPress={() => goToImage(i)}
-                  hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
-                >
-                  <View
-                    style={[
-                      styles.dot,
-                      i === activeImage ? styles.dotActive : styles.dotInactive,
-                    ]}
-                  />
-                </TouchableOpacity>
-              ))}
-            </View>
+            {/* Dot indicators — only when more than 1 image */}
+            {images.length > 1 && (
+              <View style={styles.dotsRow}>
+                {images.map((_, i) => (
+                  <TouchableOpacity
+                    key={i}
+                    onPress={() => goToImage(i)}
+                    hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+                  >
+                    <View
+                      style={[
+                        styles.dot,
+                        i === activeImage ? styles.dotActive : styles.dotInactive,
+                      ]}
+                    />
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
 
             {/* Counter badge — only when more than 1 image */}
             {images.length > 1 && (
