@@ -230,7 +230,20 @@ export default function ProviderProfileScreen() {
             resizeMode="cover"
           />
         ) : (
-          <View style={[styles.coverFallback, { height: 180 + insets.top }]} />
+          <View style={[styles.coverFallback, { height: 180 + insets.top, paddingTop: insets.top }]}>
+            <View style={styles.coverFallbackOverlay} />
+            {provider.avatar ? (
+              <Image
+                source={{ uri: provider.avatar }}
+                style={styles.coverFallbackLogo}
+                resizeMode="cover"
+              />
+            ) : (
+              <View style={styles.coverFallbackBrandMark}>
+                <Text style={styles.coverFallbackBrandText}>VÉRA</Text>
+              </View>
+            )}
+          </View>
         )}
         {/* Back button */}
         <TouchableOpacity
@@ -388,7 +401,32 @@ const styles = StyleSheet.create({
   // Cover
   coverWrapper: { position: 'relative' },
   cover: { width: '100%', backgroundColor: Colors.lightPurple },
-  coverFallback: { width: '100%', backgroundColor: Colors.purpleDark },
+  coverFallback: {
+    width: '100%',
+    backgroundColor: Colors.purpleDark,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  coverFallbackOverlay: {
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.18)',
+  },
+  coverFallbackLogo: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    borderWidth: 3,
+    borderColor: 'rgba(255,255,255,0.45)',
+  },
+  coverFallbackBrandMark: {
+    opacity: 0.22,
+  },
+  coverFallbackBrandText: {
+    fontFamily: 'Cairo_700Bold',
+    fontSize: 30,
+    color: '#fff',
+    letterSpacing: 5,
+  },
   coverFallbackName: {
     fontFamily: 'Cairo_600SemiBold',
     fontSize: 15,
