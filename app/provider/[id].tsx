@@ -230,19 +230,7 @@ export default function ProviderProfileScreen() {
             resizeMode="cover"
           />
         ) : (
-          /* Stylised placeholder: gradient-inspired two-tone band */
-          <View
-            style={[
-              styles.coverFallback,
-              { height: 180 + insets.top, paddingTop: insets.top },
-            ]}
-          >
-            <View style={styles.coverFallbackInner}>
-              <View style={styles.coverLogoCircle}>
-                <Text style={styles.coverLogoText}>V</Text>
-              </View>
-            </View>
-          </View>
+          <View style={[styles.coverFallback, { height: 180 + insets.top }]} />
         )}
         {/* Back button */}
         <TouchableOpacity
@@ -400,31 +388,7 @@ const styles = StyleSheet.create({
   // Cover
   coverWrapper: { position: 'relative' },
   cover: { width: '100%', backgroundColor: Colors.lightPurple },
-  coverFallback: {
-    width: '100%',
-    backgroundColor: Colors.purpleDark,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  coverFallbackInner: {
-    alignItems: 'center',
-    gap: 8,
-  },
-  coverLogoCircle: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.3)',
-  },
-  coverLogoText: {
-    fontFamily: 'Cairo_700Bold',
-    fontSize: 28,
-    color: '#fff',
-  },
+  coverFallback: { width: '100%', backgroundColor: Colors.purpleDark },
   coverFallbackName: {
     fontFamily: 'Cairo_600SemiBold',
     fontSize: 15,
