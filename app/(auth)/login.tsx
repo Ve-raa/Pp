@@ -137,20 +137,16 @@ export default function LoginScreen() {
           />
         </View>
 
-        {/* Provider Banner — dark & prominent */}
+        {/* Provider link — minimal */}
         <TouchableOpacity
-          style={styles.providerBanner}
+          style={styles.providerLink}
           onPress={() => router.push('/(provider)/login')}
-          activeOpacity={0.85}
+          activeOpacity={0.7}
         >
-          <Ionicons name="chevron-back" size={20} color="rgba(255,255,255,0.5)" />
-          <View style={styles.providerBannerBody}>
-            <Text style={styles.providerBannerTitle}>هل تقدم خدمات منزلية؟</Text>
-            <Text style={styles.providerBannerSub}>سجّل دخولك كمزود خدمة</Text>
-          </View>
-          <View style={styles.providerBannerIcon}>
-            <Ionicons name="briefcase" size={26} color="#fff" />
-          </View>
+          <Text style={styles.providerLinkText}>
+            هل تقدم خدمات منزلية؟{' '}
+            <Text style={styles.providerLinkHighlight}>سجّل دخولك كمزود</Text>
+          </Text>
         </TouchableOpacity>
 
       </ScrollView>
@@ -186,19 +182,9 @@ const styles = StyleSheet.create({
   dividerLine: { flex: 1, height: 1, backgroundColor: Colors.border },
   dividerText: { fontFamily: 'Cairo_400Regular', fontSize: 13, color: Colors.textMuted, marginHorizontal: 12 },
 
-  providerBanner: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: Colors.purpleDeep,
-    borderRadius: 20, marginTop: 16,
-    paddingVertical: 18, paddingHorizontal: 18, gap: 12,
-    shadowColor: Colors.purpleDeep,
-    shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.3, shadowRadius: 14, elevation: 7,
+  providerLink: {
+    alignItems: 'center', marginTop: 20,
   },
-  providerBannerIcon: {
-    width: 52, height: 52, borderRadius: 14,
-    backgroundColor: 'rgba(255,255,255,0.12)', alignItems: 'center', justifyContent: 'center',
-  },
-  providerBannerBody: { flex: 1, alignItems: 'flex-end' },
-  providerBannerTitle: { fontFamily: 'Cairo_700Bold', fontSize: 15, color: '#fff', textAlign: 'right' },
-  providerBannerSub: { fontFamily: 'Cairo_400Regular', fontSize: 12, color: 'rgba(255,255,255,0.6)', textAlign: 'right', marginTop: 2 },
+  providerLinkText: { fontFamily: 'Cairo_400Regular', fontSize: 13, color: Colors.textMuted },
+  providerLinkHighlight: { fontFamily: 'Cairo_600SemiBold', color: Colors.primary },
 });
