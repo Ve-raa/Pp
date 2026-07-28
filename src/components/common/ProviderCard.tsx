@@ -61,7 +61,7 @@ export const ProviderCard: React.FC<ProviderCardProps> = ({
         {provider.name}
       </Text>
 
-      {provider.category && (
+      {provider.category && provider.category.trim() !== provider.name.trim() && (
         <Text style={styles.category} numberOfLines={1}>
           {provider.category}
         </Text>
