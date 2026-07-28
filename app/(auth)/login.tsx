@@ -65,21 +65,8 @@ export default function LoginScreen() {
       style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      {/* Provider badge — top right, above everything */}
-      <View style={[styles.topBar, { paddingTop: insets.top + 8 }]}>
-        <TouchableOpacity
-          onPress={() => router.push('/(provider)/login')}
-          style={styles.providerBadge}
-          activeOpacity={0.75}
-        >
-          <Ionicons name="briefcase-outline" size={14} color={Colors.primary} />
-          <Text style={styles.providerBadgeText}>مزود خدمة؟</Text>
-          <Ionicons name="chevron-back" size={12} color={Colors.primary} />
-        </TouchableOpacity>
-      </View>
-
       <ScrollView
-        style={styles.container}
+        style={[styles.container, { paddingTop: insets.top }]}
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
@@ -93,7 +80,7 @@ export default function LoginScreen() {
           <Text style={styles.tagline}>منصة الخدمات المنزلية في الخليج</Text>
         </View>
 
-        {/* Form */}
+        {/* Form Card */}
         <View style={styles.card}>
           <Text style={styles.title}>تسجيل الدخول</Text>
           <Text style={styles.subtitle}>مرحباً بعودتك 👋</Text>
@@ -149,6 +136,23 @@ export default function LoginScreen() {
             size="lg"
           />
         </View>
+
+        {/* Provider Banner — dark & prominent */}
+        <TouchableOpacity
+          style={styles.providerBanner}
+          onPress={() => router.push('/(provider)/login')}
+          activeOpacity={0.85}
+        >
+          <Ionicons name="chevron-back" size={20} color="rgba(255,255,255,0.5)" />
+          <View style={styles.providerBannerBody}>
+            <Text style={styles.providerBannerTitle}>هل تقدم خدمات منزلية؟</Text>
+            <Text style={styles.providerBannerSub}>سجّل دخولك كمزود خدمة</Text>
+          </View>
+          <View style={styles.providerBannerIcon}>
+            <Ionicons name="briefcase" size={26} color="#fff" />
+          </View>
+        </TouchableOpacity>
+
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -157,32 +161,21 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   content: { paddingHorizontal: 20, paddingTop: 20 },
+
   header: { alignItems: 'center', marginBottom: 32 },
   logoContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 24,
-    backgroundColor: Colors.lightPurple,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    elevation: 5,
+    width: 80, height: 80, borderRadius: 24,
+    backgroundColor: Colors.lightPurple, alignItems: 'center', justifyContent: 'center',
+    marginBottom: 12, shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 12, elevation: 5,
   },
   brand: { fontFamily: 'Cairo_700Bold', fontSize: 32, color: Colors.primary, letterSpacing: 2 },
   tagline: { fontFamily: 'Cairo_400Regular', fontSize: 14, color: Colors.textMuted, marginTop: 4 },
+
   card: {
-    backgroundColor: Colors.cardBg,
-    borderRadius: 24,
-    padding: 24,
-    shadowColor: Colors.shadowColorDark,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    elevation: 4,
+    backgroundColor: Colors.cardBg, borderRadius: 24, padding: 24,
+    shadowColor: Colors.shadowColorDark, shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08, shadowRadius: 16, elevation: 4,
   },
   title: { fontFamily: 'Cairo_700Bold', fontSize: 24, color: Colors.textPrimary, textAlign: 'right', marginBottom: 4 },
   subtitle: { fontFamily: 'Cairo_400Regular', fontSize: 14, color: Colors.textMuted, textAlign: 'right', marginBottom: 24 },
@@ -192,30 +185,20 @@ const styles = StyleSheet.create({
   divider: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
   dividerLine: { flex: 1, height: 1, backgroundColor: Colors.border },
   dividerText: { fontFamily: 'Cairo_400Regular', fontSize: 13, color: Colors.textMuted, marginHorizontal: 12 },
-  topBar: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    paddingHorizontal: 16,
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    zIndex: 10,
+
+  providerBanner: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: Colors.purpleDeep,
+    borderRadius: 20, marginTop: 16,
+    paddingVertical: 18, paddingHorizontal: 18, gap: 12,
+    shadowColor: Colors.purpleDeep,
+    shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.3, shadowRadius: 14, elevation: 7,
   },
-  providerBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: `${Colors.primary}12`,
-    borderWidth: 1,
-    borderColor: `${Colors.primary}40`,
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
+  providerBannerIcon: {
+    width: 52, height: 52, borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.12)', alignItems: 'center', justifyContent: 'center',
   },
-  providerBadgeText: {
-    fontFamily: 'Cairo_600SemiBold',
-    fontSize: 13,
-    color: Colors.primary,
-  },
+  providerBannerBody: { flex: 1, alignItems: 'flex-end' },
+  providerBannerTitle: { fontFamily: 'Cairo_700Bold', fontSize: 15, color: '#fff', textAlign: 'right' },
+  providerBannerSub: { fontFamily: 'Cairo_400Regular', fontSize: 12, color: 'rgba(255,255,255,0.6)', textAlign: 'right', marginTop: 2 },
 });
