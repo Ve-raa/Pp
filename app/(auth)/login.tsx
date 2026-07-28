@@ -65,8 +65,21 @@ export default function LoginScreen() {
       style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
+      {/* Provider badge — top right, above everything */}
+      <View style={[styles.topBar, { paddingTop: insets.top + 8 }]}>
+        <TouchableOpacity
+          onPress={() => router.push('/(provider)/login')}
+          style={styles.providerBadge}
+          activeOpacity={0.75}
+        >
+          <Ionicons name="briefcase-outline" size={14} color={Colors.primary} />
+          <Text style={styles.providerBadgeText}>مزود خدمة؟</Text>
+          <Ionicons name="chevron-back" size={12} color={Colors.primary} />
+        </TouchableOpacity>
+      </View>
+
       <ScrollView
-        style={[styles.container, { paddingTop: insets.top }]}
+        style={styles.container}
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
@@ -136,15 +149,6 @@ export default function LoginScreen() {
             size="lg"
           />
         </View>
-
-        {/* Provider link */}
-        <TouchableOpacity
-          onPress={() => router.push('/(provider)/login')}
-          style={styles.providerLink}
-        >
-          <Ionicons name="briefcase-outline" size={16} color={Colors.purpleMid} />
-          <Text style={styles.providerLinkText}>دخول كمزود خدمة 💼</Text>
-        </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -188,13 +192,30 @@ const styles = StyleSheet.create({
   divider: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
   dividerLine: { flex: 1, height: 1, backgroundColor: Colors.border },
   dividerText: { fontFamily: 'Cairo_400Regular', fontSize: 13, color: Colors.textMuted, marginHorizontal: 12 },
-  providerLink: {
+  topBar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    zIndex: 10,
+  },
+  providerBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    marginTop: 24,
-    paddingVertical: 14,
+    gap: 4,
+    backgroundColor: `${Colors.primary}12`,
+    borderWidth: 1,
+    borderColor: `${Colors.primary}40`,
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
   },
-  providerLinkText: { fontFamily: 'Cairo_600SemiBold', fontSize: 14, color: Colors.purpleMid },
+  providerBadgeText: {
+    fontFamily: 'Cairo_600SemiBold',
+    fontSize: 13,
+    color: Colors.primary,
+  },
 });
