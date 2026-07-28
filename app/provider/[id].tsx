@@ -33,7 +33,6 @@ interface ProviderProfile {
   id: string;
   name: string;
   avatar?: string;
-  coverImage?: string;
   bio?: string;
   rating?: number;
   reviewsCount?: number;
@@ -73,9 +72,6 @@ async function getProviderProfile(id: string): Promise<ProviderProfile> {
     id: String(p.id),
     name: p.name ?? '',
     avatar: fullUrl(p.avatar ?? p.logo_url),
-    coverImage: fullUrl(
-      p.cover_image ?? p.coverImage ?? p.cover ?? p.banner_image ?? p.banner ?? p.header_image ?? p.profile_cover
-    ),
     bio: p.bio ?? p.description,
     rating: Number(p.rating ?? 0),
     reviewsCount: p.reviewsCount ?? p.review_count ?? 0,
@@ -182,6 +178,14 @@ export default function ProviderProfileScreen() {
 
   return (
     <View style={[styles.container, { paddingBottom: insets.bottom + 16 }]}>
+      {/* Back button */}
+      <TouchableOpacity
+        style={[styles.backBtn, { top: insets.top + 12 }]}
+        onPress={() => router.back()}
+      >
+        <Ionicons name="chevron-forward" size={22} color={Colors.primary} />
+      </TouchableOpacity>
+
       {/* Custom login modal — same design as service detail */}
       <Modal
         visible={showLoginModal}
@@ -220,39 +224,6 @@ export default function ProviderProfileScreen() {
           </Pressable>
         </Pressable>
       </Modal>
-
-      {/* Cover */}
-      <View style={styles.coverWrapper}>
-        {provider.coverImage ? (
-          <Image
-            source={{ uri: provider.coverImage }}
-            style={[styles.cover, { height: 180 + insets.top }]}
-            resizeMode="cover"
-          />
-        ) : (
-          <View style={[styles.coverFallback, { height: 180 + insets.top, paddingTop: insets.top }]}>
-            <View style={styles.coverFallbackOverlay} />
-            {provider.avatar ? (
-              <Image
-                source={{ uri: provider.avatar }}
-                style={styles.coverFallbackLogo}
-                resizeMode="cover"
-              />
-            ) : (
-              <View style={styles.coverFallbackBrandMark}>
-                <Text style={styles.coverFallbackBrandText}>VÉRA</Text>
-              </View>
-            )}
-          </View>
-        )}
-        {/* Back button */}
-        <TouchableOpacity
-          style={[styles.backBtn, { top: insets.top + 12 }]}
-          onPress={() => router.back()}
-        >
-          <Ionicons name="chevron-forward" size={22} color="#fff" />
-        </TouchableOpacity>
-      </View>
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -398,58 +369,24 @@ const styles = StyleSheet.create({
   },
   backFallbackSecondaryText: { fontFamily: 'Cairo_700Bold', fontSize: 14, color: Colors.primary },
 
-  // Cover
-  coverWrapper: { position: 'relative' },
-  cover: { width: '100%', backgroundColor: Colors.lightPurple },
-  coverFallback: {
-    width: '100%',
-    backgroundColor: Colors.purpleDark,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  coverFallbackOverlay: {
-    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.18)',
-  },
-  coverFallbackLogo: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    borderWidth: 3,
-    borderColor: 'rgba(255,255,255,0.45)',
-  },
-  coverFallbackBrandMark: {
-    opacity: 0.22,
-  },
-  coverFallbackBrandText: {
-    fontFamily: 'Cairo_700Bold',
-    fontSize: 30,
-    color: '#fff',
-    letterSpacing: 5,
-  },
-  coverFallbackName: {
-    fontFamily: 'Cairo_600SemiBold',
-    fontSize: 15,
-    color: 'rgba(255,255,255,0.85)',
-    maxWidth: 200,
-    textAlign: 'center',
-  },
   backBtn: {
     position: 'absolute',
     right: 16,
-    backgroundColor: 'rgba(0,0,0,0.35)',
+    backgroundColor: Colors.lightPurple,
     borderRadius: 20,
     padding: 8,
     zIndex: 10,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
 
-  scrollContent: { paddingHorizontal: 16 },
+  scrollContent: { paddingHorizontal: 16, paddingTop: 8 },
 
   // Header card
   headerCard: {
     backgroundColor: Colors.cardBg,
     borderRadius: 20,
-    marginTop: -40,
+    marginTop: 0,
     padding: 20,
     alignItems: 'center',
     shadowColor: Colors.shadowColorDark,
