@@ -64,6 +64,24 @@ export default function ProfileScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.providerBadge}
+          onPress={() => {
+            if (providerToken) {
+              switchMode('provider');
+              router.replace('/(provider)');
+            } else {
+              router.push('/(provider)/login');
+            }
+          }}
+          activeOpacity={0.75}
+        >
+          <Ionicons name="briefcase-outline" size={14} color={Colors.primary} />
+          <Text style={styles.providerBadgeText}>
+            {providerToken ? 'حساب المزود' : 'دخول كمزود'}
+          </Text>
+          <Ionicons name="chevron-back" size={12} color={Colors.primary} />
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>حسابي</Text>
       </View>
 
@@ -154,8 +172,33 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
-  header: { paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: Colors.border, backgroundColor: Colors.cardBg },
-  headerTitle: { fontFamily: 'Cairo_700Bold', fontSize: 20, color: Colors.textPrimary, textAlign: 'right' },
+  header: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+    backgroundColor: Colors.cardBg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  headerTitle: { fontFamily: 'Cairo_700Bold', fontSize: 20, color: Colors.textPrimary },
+  providerBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: `${Colors.primary}12`,
+    borderWidth: 1,
+    borderColor: `${Colors.primary}40`,
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  providerBadgeText: {
+    fontFamily: 'Cairo_600SemiBold',
+    fontSize: 12,
+    color: Colors.primary,
+  },
   userCard: {
     flexDirection: 'row',
     justifyContent: 'space-between',

@@ -1,8 +1,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'expo-router';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, Image, StyleSheet } from 'react-native';
 import { useAuthStore } from '../src/store/authStore';
-import { Colors } from '../src/constants/colors';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ONBOARDING_KEY = 'vera_onboarding_done';
@@ -15,9 +14,8 @@ export default function Index() {
     if (isLoading) return;
 
     const navigate = async () => {
-      // Check if onboarding was seen
       const onboardingDone = await AsyncStorage.getItem(ONBOARDING_KEY);
-      
+
       if (!onboardingDone) {
         router.replace('/onboarding');
         return;
@@ -26,8 +24,6 @@ export default function Index() {
       if (mode === 'provider' && providerToken) {
         router.replace('/(provider)');
       } else {
-        // Allow guest browsing — go straight to buyer home
-        // Login will be requested only when performing an action
         router.replace('/(buyer)');
       }
     };
@@ -37,7 +33,12 @@ export default function Index() {
 
   return (
     <View style={styles.container}>
-      <ActivityIndicator size="large" color={Colors.primary} />
+      <Image
+        source={require('../assets/images/icon.png')}
+        style={styles.logo}
+        resizeMode="contain"
+      />
+      <Text style={styles.brand}>VÉRA</Text>
     </View>
   );
 }
@@ -47,6 +48,18 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.background,
+    backgroundColor: '#6366f1',
+  },
+  logo: {
+    width: 120,
+    height: 120,
+    borderRadius: 28,
+    marginBottom: 20,
+  },
+  brand: {
+    fontFamily: 'Cairo_700Bold',
+    fontSize: 32,
+    color: '#fff',
+    letterSpacing: 6,
   },
 });
