@@ -51,15 +51,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#6366f1',
   },
   logo: {
-    width: 120,
-    height: 120,
-    borderRadius: 28,
-    marginBottom: 20,
+    width: 200,
+    height: 200,
+    borderRadius: 48,
+    marginBottom: 28,
   },
   brand: {
     fontFamily: 'Cairo_700Bold',
-    fontSize: 32,
+    fontSize: 38,
     color: '#fff',
-    letterSpacing: 6,
+    letterSpacing: 8,
   },
 });

@@ -143,19 +143,6 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        {/* Provider switch */}
-        {providerToken && (
-          <View style={styles.section}>
-            <TouchableOpacity
-              style={styles.switchBtn}
-              onPress={() => { switchMode('provider'); router.replace('/(provider)'); }}
-            >
-              <Ionicons name="briefcase" size={20} color={Colors.primary} />
-              <Text style={styles.switchText}>التبديل إلى حساب مزود الخدمة</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
         {/* Logout */}
         <View style={styles.section}>
           <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
