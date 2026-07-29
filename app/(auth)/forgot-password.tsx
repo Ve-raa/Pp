@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, Alert } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Input } from '../../src/components/common/Input';
 import { Button } from '../../src/components/common/Button';
@@ -27,9 +27,10 @@ export default function ForgotPasswordScreen() {
   };
 
   return (
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <Header title="استعادة كلمة المرور" showBack />
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         {sent ? (
           <View style={styles.successCard}>
             <Text style={styles.successIcon}>📧</Text>
@@ -57,6 +58,7 @@ export default function ForgotPasswordScreen() {
         )}
       </ScrollView>
     </View>
+    </KeyboardAvoidingView>
   );
 }
 

@@ -98,7 +98,7 @@ export default function SearchScreen() {
       {/* Sort chips */}
       {hasResults && (
         <View style={styles.sortRow}>
-          <FlatList
+          <FlatList keyboardShouldPersistTaps="handled"
             horizontal
             data={SORT_OPTIONS}
             keyExtractor={(s) => s.value}
@@ -145,7 +145,7 @@ export default function SearchScreen() {
               subtitle={`لم نجد خدمات تطابق "${debouncedQuery}"`}
             />
           ) : (
-            <FlatList
+            <FlatList keyboardShouldPersistTaps="handled"
               data={results!.services}
               keyExtractor={(s) => s.id}
               contentContainerStyle={styles.resultsList}
@@ -171,7 +171,7 @@ export default function SearchScreen() {
       {!isSearching && !hasResults && (
         <>
           <Text style={styles.browseTitle}>تصفح الأقسام</Text>
-          <FlatList
+          <FlatList keyboardShouldPersistTaps="handled"
             data={categories}
             keyExtractor={(c) => c.id}
             numColumns={3}

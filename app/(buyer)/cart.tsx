@@ -95,7 +95,7 @@ export default function CartScreen() {
         <Text style={styles.headerTitle}>السلة ({items.length})</Text>
       </View>
 
-      <FlatList
+      <FlatList keyboardShouldPersistTaps="handled"
         data={items}
         keyExtractor={(i) => i.id}
         contentContainerStyle={styles.list}

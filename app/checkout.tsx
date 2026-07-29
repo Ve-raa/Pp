@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, TextInput,
+  KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -190,7 +191,8 @@ export default function CheckoutScreen() {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <Header title="إتمام الطلب" showBack />
       <ScrollView
-        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 120 }}
       >
         {/* Order Summary */}

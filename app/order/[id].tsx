@@ -102,7 +102,7 @@ export default function OrderDetailScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <Header title={`طلب #${order.orderNumber}`} showBack />
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }} keyboardShouldPersistTaps="handled">
 
         {/* Status Card */}
         <View style={styles.statusCard}>
