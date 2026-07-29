@@ -115,7 +115,7 @@ export default function ProviderDashboardScreen() {
 
           {/* Quick Actions */}
           <View style={styles.quickActions}>
-            <TouchableOpacity style={styles.qaBtn} onPress={() => router.push('/(provider)/services')}>
+            <TouchableOpacity style={styles.qaBtn} onPress={() => router.push('/(provider)/add-service')}>
               <Ionicons name="add-circle" size={28} color={Colors.primary} />
               <Text style={styles.qaBtnText}>إضافة خدمة</Text>
             </TouchableOpacity>

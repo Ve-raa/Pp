@@ -69,12 +69,13 @@ const errStyles = StyleSheet.create({
 function AddServiceContent() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { providerUser, providerToken } = useAuthStore();
+  const { providerUser, providerToken, isLoading } = useAuthStore();
 
   // ── حماية: إعادة التوجيه إذا لم يكن مسجّلاً كمزود ────────────────────────
   const isRedirectingRef = React.useRef(false);
 
   useEffect(() => {
+    if (isLoading) return;
     if (!providerToken && !isRedirectingRef.current) {
       isRedirectingRef.current = true;
       const t = setTimeout(() => {
