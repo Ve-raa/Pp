@@ -1,7 +1,7 @@
 import { publicGet } from './client';
 import type { HomePageData, Banner, Service, Category, ServiceProvider } from '../types';
 
-const BASE = 'https://veraapp.app';
+const BASE = process.env.EXPO_PUBLIC_API_URL ?? 'https://veraapp.app';
 
 function fullUrl(path?: string | null): string | undefined {
   if (!path) return undefined;
