@@ -1,4 +1,4 @@
-import { providerClient, providerGet, providerPost } from './client';
+import { buyerPost, providerClient, providerGet, providerPost } from './client';
 import type {
   ProviderDashboard,
   ProviderEarnings,
@@ -95,22 +95,24 @@ export async function updateProviderProfile(data: Partial<ProviderUser>): Promis
   return res.data;
 }
 
-
 // ─── متابعة / إلغاء متابعة مزود ─────────────────────────────────────────────
-import { buyerPost, publicGet as _publicGet } from './client';
 
 export async function followProvider(providerId: string): Promise<void> {
   try {
     await buyerPost(`/api/providers/${providerId}/follow`, {});
-  } catch {
-    // الخادم قد لا يدعم هذا المسار بعد — نتجاهل الخطأ ونحتفظ بالحالة المحلية
+  } catch (err: any) {
+    // تجاهل 404 فقط (المسار غير مُنفَّذ بعد في الخادم)
+    // أي خطأ آخر (شبكة، 500، ...) يُعاد رفعه
+    const status = err?.response?.status;
+    if (status !== 404 && status !== 405) throw err;
   }
 }
 
 export async function unfollowProvider(providerId: string): Promise<void> {
   try {
     await buyerPost(`/api/providers/${providerId}/unfollow`, {});
-  } catch {
-    // تجاهل
+  } catch (err: any) {
+    const status = err?.response?.status;
+    if (status !== 404 && status !== 405) throw err;
   }
 }
