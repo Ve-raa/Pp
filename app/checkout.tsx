@@ -14,7 +14,7 @@ import { Header } from '../src/components/common/Header';
 import { useCartStore } from '../src/store/cartStore';
 import { useAuthStore } from '../src/store/authStore';
 import { LoginRequired } from '../src/components/common/LoginRequired';
-import { cancelOrder, createOrder, initPayment } from '../src/api/orders';
+import { cancelOrder, createOrder, initPayment, verifyPayment } from '../src/api/orders';
 import type { PaymentMethod } from '../src/types';
 
 // Stripe يُنشئ جلسة الدفع مباشرةً على السيرفر ولا يحتاج طلباً في قاعدة البيانات مسبقاً.
@@ -156,6 +156,20 @@ export default function CheckoutScreen() {
           if (wasSuccess) {
             clearCart();
             hapticNotification();
+            // Stripe: السيرفر ينشئ الطلب داخلياً عند إنشاء جلسة الدفع.
+            // نتحقق من الجلسة للحصول على orderId الحقيقي من قاعدة البيانات.
+            if (selectedPayment === 'stripe' && payment.paymentId) {
+              try {
+                const verified = await verifyPayment(payment.paymentId);
+                if (verified.orderId) {
+                  router.replace(`/order/${verified.orderId}`);
+                  return;
+                }
+              } catch {}
+              // إذا فشل التحقق، نذهب لقائمة الطلبات كـ fallback
+              router.replace('/(buyer)/orders');
+              return;
+            }
             router.replace(`/order/${paymentOrderId}`);
             return;
           }
