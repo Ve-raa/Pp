@@ -1,114 +1,150 @@
-# VÉRA — تطبيق الجوال
+# VÉRA — دليل النشر على Google Play Store
 
-تطبيق React Native (Expo) لمنصة VÉRA — سوق إلكتروني متعدد التجار للخدمات المنزلية في منطقة الخليج.
+هذا الدليل موجّه للمطوّر أو صاحب المشروع لنشر تطبيق VÉRA على Google Play Store من الصفر حتى الإطلاق.
 
-## 🚀 تشغيل التطبيق
+---
+
+## أولاً: إنشاء حساب Google Play Console
+
+1. اذهب إلى [play.google.com/console](https://play.google.com/console) وسجّل دخولك بحساب Google.
+2. اختر **Get started** وادفع رسوم التسجيل لمرة واحدة: **25 دولار أمريكي**.
+3. أكمل بيانات حساب المطوّر (الاسم، البريد، رقم الهاتف).
+4. انتظر التفعيل — عادةً يستغرق من ساعة إلى 48 ساعة.
+
+---
+
+## ثانياً: إعداد بيئة البناء
 
 ### المتطلبات
-- Node.js 18+
-- npm أو yarn
-- Expo Go على جهازك (iOS أو Android)
+- Node.js 20 أو أحدث
+- حساب على [expo.dev](https://expo.dev) مع تسجيل الدخول عبر `eas login`
+- EAS CLI: `npm install -g eas-cli`
 
-### خطوات التشغيل
-
+### تهيئة المشروع
 ```bash
-# 1. نسخ المستودع
 git clone https://github.com/Ve-raa/Pp.git
 cd Pp
-
-# 2. تثبيت الاعتماديات
-npm install
-# أو
 yarn install
-
-# 3. إنشاء ملف البيئة
 cp .env.example .env
-# عدّل القيم حسب الحاجة
-
-# 4. تشغيل التطبيق
-npx expo start
 ```
 
-### خيارات التشغيل بعد `npx expo start`:
-- اضغط `a` — فتح على محاكي Android
-- اضغط `i` — فتح على محاكي iOS
-- امسح QR Code — فتح على Expo Go على جهازك الحقيقي
-
-## 📱 ميزات التطبيق
-
-### تطبيق المشتري (Buyer)
-- ✅ Splash + Onboarding
-- ✅ تسجيل الدخول / إنشاء حساب
-- ✅ الصفحة الرئيسية: أقسام، بانرات، خدمات مميزة وشائعة
-- ✅ بحث متقدم مع فلترة
-- ✅ تصفح الأقسام
-- ✅ تفاصيل الخدمة + التقييمات
-- ✅ السلة + أكواد الخصم
-- ✅ الدفع: Stripe / Tabby / Tamara / محفظة
-- ✅ طلباتي + تتبع الحالة
-- ✅ المفضلة
-- ✅ الملف الشخصي + المحفظة + برنامج الولاء
-- ✅ الإشعارات
-- ✅ صفحة الدعم
-
-### تطبيق مزود الخدمة (Provider)
-- ✅ تسجيل دخول / تسجيل مزود
-- ✅ لوحة التحكم مع إحصاءات
-- ✅ إدارة الخدمات (عرض + إضافة)
-- ✅ إدارة الطلبات + تحديث الحالة
-- ✅ الأرباح والمدفوعات
-- ✅ الملف الشخصي
-
-## 🔧 البنية التقنية
-
+افتح ملف `.env` وضع القيم الحقيقية:
 ```
-vera/
-├── app/                    # Expo Router screens
-│   ├── (auth)/             # شاشات المصادقة
-│   ├── (buyer)/            # تطبيق المشتري (tabs)
-│   ├── (provider)/         # تطبيق مزود الخدمة
-│   ├── service/[id].tsx    # تفاصيل الخدمة
-│   ├── order/[id].tsx      # تفاصيل الطلب
-│   └── ...
-├── src/
-│   ├── api/                # Axios API modules
-│   ├── constants/          # Colors, strings
-│   ├── components/         # Reusable components
-│   ├── store/              # Zustand state management
-│   └── types/              # TypeScript types
-├── assets/                 # Images, fonts
-├── .env.example            # Environment variables template
-└── README.md
-```
-
-## ⚙️ متغيرات البيئة
-
-انسخ `.env.example` إلى `.env` وعدّل القيم:
-
-```env
 EXPO_PUBLIC_API_URL=https://veraapp.app
-EXPO_PUBLIC_STRIPE_KEY=pk_live_xxxxx
+EXPO_PUBLIC_STRIPE_KEY=pk_live_xxxxxxxxxxxx
 ```
 
-## 🌐 API
+---
 
-Base URL: `https://veraapp.app`
+## ثالثاً: بناء نسخة الإنتاج (AAB)
 
-المصادقة عبر JWT Bearer Token:
-- مشتري: `POST /api/buyer-auth/login` → `buyer_token`
-- مزود: `POST /api/provider-auth/login` → `provider_token`
+ملف AAB هو الصيغة التي يقبلها Google Play للتوزيع على المتاجر.
 
-راجع توثيق الـ API الكامل على: https://veraapp.app/downloads
+```bash
+# تسجيل الدخول إلى EAS
+eas login
 
-## 🛡️ الأمان
+# بناء نسخة الإنتاج
+eas build --platform android --profile production
+```
 
-- بيانات المصادقة تُحفظ بأمان في `expo-secure-store`
-- لا توجد credentials في الكود — فقط environment variables
-- HTTPS مطلوب لجميع API calls
+سيطلب منك EAS إنشاء **Keystore** (ملف توقيع التطبيق) في أول مرة — اختر **Generate new keystore** واحتفظ بالبيانات التي يعرضها بأمان، لأنك ستحتاجها في كل تحديث مستقبلي.
 
-## 🎨 الهوية البصرية
+بعد انتهاء البناء (يستغرق 10-20 دقيقة)، حمّل ملف `.aab` من رابط EAS.
 
-- اللون الأساسي: `#6366f1` (Indigo)
-- اللون الثانوي: `#E91E8C` (Pink/Magenta)
-- الخط: Cairo (Arabic Google Font)
-- الاتجاه: RTL كامل (عربي)
+---
+
+## رابعاً: إنشاء التطبيق في Play Console
+
+1. في Play Console، اضغط **Create app**.
+2. اختر اسم التطبيق: **VÉRA**، اللغة: **العربية**، النوع: **App**، مجاني/مدفوع حسب نموذج العمل.
+3. اقرأ وقبل سياسات المطوّرين.
+
+### إعداد الإصدار
+1. من القائمة الجانبية اختر **Production → Releases → Create new release**.
+2. ارفع ملف `.aab` الذي حمّلته من EAS.
+3. اكتب ملاحظات الإصدار بالعربية، مثل: "الإصدار الأول من تطبيق VÉRA لخدمات المنزل".
+
+---
+
+## خامساً: ملء بيانات التطبيق
+
+### معلومات التطبيق الأساسية (Store listing)
+| الحقل | القيمة المقترحة |
+|---|---|
+| **اسم التطبيق** | VÉRA — خدمات منزلية |
+| **الوصف القصير** | اطلب خدمات منزلية بضغطة واحدة مع ضمان الجودة |
+| **الوصف الكامل** | منصة VÉRA تربطك بأفضل مزودي الخدمات المنزلية في الخليج... |
+| **الفئة** | House & Home |
+
+### الأصول البصرية المطلوبة
+- **أيقونة التطبيق**: 512×512 بكسل PNG (موجودة في `assets/images/icon.png` — تحتاج تصدير بالمقاس المطلوب)
+- **صورة الغلاف**: 1024×500 بكسل
+- **لقطات الشاشة**: على الأقل 2 لقطة لكل فئة جهاز (هاتف / تابلت) — المقاسات المقبولة: 16:9 أو 9:16
+
+### سياسة الخصوصية
+مطلوبة إلزامياً. ارفعها على أي موقع (مثل صفحة على موقعك أو Notion) والصق الرابط في حقل **Privacy policy URL**.
+
+---
+
+## سادساً: إعداد التصنيف العمري
+
+1. من القائمة: **Policy → App content → Target audience and content**.
+2. أجب على أسئلة المحتوى بصدق — التطبيق موجّه للبالغين (18+).
+3. احصل على التصنيف العمري (Rating) — سيُولَّد تلقائياً.
+
+---
+
+## سابعاً: مسار المراجعة والنشر
+
+يُنصح باتباع هذا المسار:
+
+```
+Internal Testing (اختبار داخلي)
+        ↓
+Closed Testing / Alpha (اختبار محدود)
+        ↓
+Open Testing / Beta (اختبار مفتوح)
+        ↓
+Production (النشر الكامل)
+```
+
+لإطلاق أول مرة يمكنك القفز مباشرة إلى **Internal Testing** ثم **Production** بعد التأكد من عمل كل شيء.
+
+---
+
+## ثامناً: التحديثات المستقبلية
+
+### تحديث عبر EAS (موصى به)
+```bash
+# تحديث فوري بدون انتظار مراجعة Google (OTA)
+eas update --channel production --message "وصف التحديث"
+```
+يعمل هذا لتغييرات JavaScript فقط (شاشات، منطق، واجهة). أي تغيير في الكود الأصلي (Native) يتطلب build جديد.
+
+### تحديث يتطلب build جديد
+```bash
+eas build --platform android --profile production
+```
+ثم ارفع الـ AAB الجديد في Play Console على **Production → Create new release**.
+
+---
+
+## ملاحظات مهمة
+
+| الموضوع | التفاصيل |
+|---|---|
+| **مدة المراجعة** | أول إصدار: 3-7 أيام عمل. التحديثات اللاحقة: 1-3 أيام |
+| **احتفظ بالـ Keystore** | إذا ضاع لا يمكن تحديث التطبيق أبداً — احفظه في مكانين منفصلين |
+| **رقم الإصدار** | يُدار تلقائياً عبر `"appVersionSource": "remote"` في `eas.json` |
+| **الأخطاء الشائعة** | رفض بسبب سياسة الخصوصية (تأكد من وجود رابط صالح) أو أذونات غير مبررة |
+| **متطلبات Android** | التطبيق يستهدف Android 13+ وهو متوافق مع متطلبات Google الحالية |
+
+---
+
+## روابط مفيدة
+
+- [Google Play Console Help](https://support.google.com/googleplay/android-developer)
+- [EAS Build Documentation](https://docs.expo.dev/build/introduction)
+- [EAS Update Documentation](https://docs.expo.dev/eas-update/introduction)
+- لوحة تحكم EAS: [expo.dev](https://expo.dev)
