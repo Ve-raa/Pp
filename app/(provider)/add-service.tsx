@@ -72,7 +72,6 @@ function AddServiceContent() {
   const { providerUser, providerToken } = useAuthStore();
 
   // ── حماية: إعادة التوجيه إذا لم يكن مسجّلاً كمزود ────────────────────────
-  // نستخدم ref لمنع تشغيل التأثير مرتين أو بعد unmount
   const isRedirectingRef = React.useRef(false);
 
   useEffect(() => {
@@ -84,7 +83,7 @@ function AddServiceContent() {
         } catch {
           // ignore — قد تكون الشاشة unmounted
         }
-      }, 50); // زيادة التأخير لضمان جاهزية stack التنقل
+      }, 50);
       return () => clearTimeout(t);
     }
   }, [providerToken, router]);
@@ -145,8 +144,9 @@ function AddServiceContent() {
       }
       const status = error?.response?.status;
       if (status === 401) {
-        // المزود غير مصادق عليه — الـ unauthorized handler سيتولى الأمر
-        try { router.replace('/(provider)/login'); } catch { /* ignore */ }
+        // الجلسة منتهية — المعالج في client.ts سيتولى إعادة التوجيه تلقائياً
+        // لا تتخذ أي إجراء إضافي هنا لتجنب التنقل المزدوج
+        return;
       } else if (status === 422 || status === 400) {
         Alert.alert('بيانات غير صحيحة', 'تحقق من جميع الحقول وحاول مجدداً');
       } else if (status === 500) {
@@ -176,7 +176,6 @@ function AddServiceContent() {
   };
 
   // عدم رسم المحتوى إذا لم يكن مصادقاً (سيُعاد التوجيه قريباً)
-  // هذا يمنع أي crash ناتج عن محاولة رسم العناصر بدون بيانات المزود
   if (!providerToken || !providerUser) {
     return (
       <View style={[styles.container, { alignItems: 'center', justifyContent: 'center' }]}>
@@ -190,7 +189,7 @@ function AddServiceContent() {
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={styles.container}>
         <Header title="إضافة خدمة جديدة" showBack />

@@ -27,10 +27,21 @@ export async function clearProviderToken(): Promise<void> {
   try { await SecureStore.deleteItemAsync(PROVIDER_TOKEN_KEY); } catch {}
 }
 
-// ─── Unauthorized Handler ─────────────────────────────────────────────────────
-let _onUnauthorized: (() => void) | null = null;
+// ─── Separate Unauthorized Handlers (buyer vs provider) ──────────────────────
+// Using separate handlers prevents cross-contamination: a 401 from the provider
+// API should only clear the provider session, NOT the buyer session, and vice versa.
+let _onBuyerUnauthorized: (() => void) | null = null;
+let _onProviderUnauthorized: (() => void) | null = null;
+
+export function setBuyerUnauthorizedHandler(handler: () => void) {
+  _onBuyerUnauthorized = handler;
+}
+export function setProviderUnauthorizedHandler(handler: () => void) {
+  _onProviderUnauthorized = handler;
+}
+/** @deprecated Use setBuyerUnauthorizedHandler / setProviderUnauthorizedHandler */
 export function setUnauthorizedHandler(handler: () => void) {
-  _onUnauthorized = handler;
+  _onBuyerUnauthorized = handler;
 }
 
 // ─── Shared base config ───────────────────────────────────────────────────────
@@ -50,15 +61,20 @@ const baseConfig = {
 // We must forward the stored JWT as a Cookie header on every authenticated request.
 function createClient(
   tokenGetter: () => Promise<string | null>,
-  cookieName: string
+  cookieName: string,
+  getUnauthorizedHandler: () => (() => void) | null
 ): AxiosInstance {
   const client = axios.create(baseConfig);
 
   client.interceptors.request.use(async (config) => {
-    const token = await tokenGetter();
-    // Only inject when we have a real JWT (starts with eyJ), not the sentinel 'via-cookie'
-    if (token && token !== 'via-cookie' && token.startsWith('eyJ')) {
-      config.headers['Cookie'] = `${cookieName}=${token}`;
+    try {
+      const token = await tokenGetter();
+      // Only inject when we have a real JWT (starts with eyJ), not the sentinel 'via-cookie'
+      if (token && token !== 'via-cookie' && token.startsWith('eyJ')) {
+        config.headers['Cookie'] = `${cookieName}=${token}`;
+      }
+    } catch {
+      // SecureStore access failure — proceed without token
     }
     return config;
   });
@@ -67,9 +83,9 @@ function createClient(
     (response) => response,
     async (error: AxiosError) => {
       if (error.response?.status === 401) {
-        await clearBuyerToken().catch(() => {});
-        await clearProviderToken().catch(() => {});
-        _onUnauthorized?.();
+        // Only call THIS client's unauthorized handler — do NOT clear the other session
+        const handler = getUnauthorizedHandler();
+        handler?.();
       }
       return Promise.reject(error);
     }
@@ -79,8 +95,8 @@ function createClient(
 }
 
 // ─── Exported Clients ─────────────────────────────────────────────────────────
-export const buyerClient    = createClient(getBuyerToken,    'buyer_token');
-export const providerClient = createClient(getProviderToken, 'provider_token');
+export const buyerClient    = createClient(getBuyerToken,    'buyer_token',    () => _onBuyerUnauthorized);
+export const providerClient = createClient(getProviderToken, 'provider_token', () => _onProviderUnauthorized);
 
 // Public client — no auth token
 export const publicClient = axios.create(baseConfig);

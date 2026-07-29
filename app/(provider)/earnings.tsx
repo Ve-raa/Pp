@@ -19,7 +19,7 @@ export default function ProviderEarningsScreen() {
 
   const payoutMutation = useMutation({
     mutationFn: (amount: number) => requestPayout(amount),
-    onSuccess: () => Alert.alert('تم الطلب ✅', 'تم إرسال طلب السحب. سيتم المعالجة خلال 3-5 أيام عمل.'),
+    onSuccess: () => Alert.alert('تم الطلب ✅', 'تم إرسال طلب السحب. سيتم التحويل خلال 14 يوم.'),
     onError: () => Alert.alert('خطأ', 'تعذّر إرسال طلب السحب'),
   });
 
@@ -78,8 +78,9 @@ export default function ProviderEarningsScreen() {
             fullWidth
             style={{ marginTop: 12 }}
           />
+          {/* FIX: Transfer time is 14 days */}
           <Text style={styles.payoutNote}>
-            يتم تحويل المبالغ عبر Stripe Connect خلال 3-5 أيام عمل
+            يتم تحويل المبالغ خلال 14 يوم من تاريخ طلب السحب
           </Text>
         </View>
 

@@ -8,7 +8,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { I18nManager, StyleSheet, Platform, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useAuthStore } from '../src/store/authStore';
-import { setUnauthorizedHandler } from '../src/api/client';
+import { setBuyerUnauthorizedHandler, setProviderUnauthorizedHandler } from '../src/api/client';
 
 // Force RTL for Arabic — guard against unnecessary reload loop.
 // On iOS/Android: if the layout direction is already RTL, skip forcing it.
@@ -30,7 +30,7 @@ const queryClient = new QueryClient({
 });
 
 export default function RootLayout() {
-  const { hydrateFromStorage, logoutAll } = useAuthStore();
+  const { hydrateFromStorage, logoutBuyer, logoutProvider } = useAuthStore();
   const router = useRouter();
   const isNavigationReady = useRef(false);
 
@@ -40,12 +40,15 @@ export default function RootLayout() {
     Cairo_700Bold,
   });
 
-  // Register the 401 unauthorized handler once the router is mounted.
-  // When any API call returns 401, clear the session and show an alert before redirecting.
+  // Register separate 401 unauthorized handlers for buyer and provider.
+  // Each handler only clears its own session — never the other — to avoid
+  // logging out the user from both accounts when only one token expires.
   useEffect(() => {
     isNavigationReady.current = true;
-    setUnauthorizedHandler(() => {
-      logoutAll().then(() => {
+
+    // ── Buyer session expired ────────────────────────────────────────────────
+    setBuyerUnauthorizedHandler(() => {
+      logoutBuyer().catch(() => {}).finally(() => {
         Alert.alert(
           'انتهت الجلسة',
           'يرجى تسجيل الدخول مجدداً للمتابعة',
@@ -55,6 +58,28 @@ export default function RootLayout() {
               onPress: () => {
                 try {
                   router.replace('/(auth)/login');
+                } catch {
+                  // Router may not be mounted yet
+                }
+              },
+            },
+          ],
+        );
+      });
+    });
+
+    // ── Provider session expired ─────────────────────────────────────────────
+    setProviderUnauthorizedHandler(() => {
+      logoutProvider().catch(() => {}).finally(() => {
+        Alert.alert(
+          'انتهت جلسة مزود الخدمة',
+          'يرجى تسجيل الدخول مجدداً للمتابعة',
+          [
+            {
+              text: 'تسجيل الدخول',
+              onPress: () => {
+                try {
+                  router.replace('/(provider)/login');
                 } catch {
                   // Router may not be mounted yet
                 }
