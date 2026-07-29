@@ -156,18 +156,28 @@ export default function CheckoutScreen() {
           if (wasSuccess) {
             clearCart();
             hapticNotification();
-            // Stripe: السيرفر ينشئ الطلب داخلياً عند إنشاء جلسة الدفع.
-            // نتحقق من الجلسة للحصول على orderId الحقيقي من قاعدة البيانات.
-            if (selectedPayment === 'stripe' && payment.paymentId) {
-              try {
-                const verified = await verifyPayment(payment.paymentId);
-                if (verified.orderId) {
-                  router.replace(`/order/${verified.orderId}`);
-                  return;
-                }
-              } catch {}
-              // إذا فشل التحقق، نذهب لقائمة الطلبات كـ fallback
-              router.replace('/(buyer)/orders');
+            if (selectedPayment === 'stripe') {
+              // Stripe: السيرفر قد ينشئ الطلب عبر webhook أو عند التحقق من الجلسة.
+              // نحاول الحصول على orderId حقيقي (غير local-) من السيرفر.
+              let realOrderId: string | null = null;
+              if (payment.paymentId) {
+                try {
+                  const verified = await verifyPayment(payment.paymentId);
+                  if (verified.orderId && !verified.orderId.startsWith('local-')) {
+                    realOrderId = verified.orderId;
+                  }
+                } catch {}
+              }
+              if (realOrderId) {
+                router.replace(`/order/${realOrderId}`);
+              } else {
+                // السيرفر لم يُرجع orderId حقيقياً بعد — نوجّه لقائمة الطلبات
+                Alert.alert(
+                  'تم الدفع بنجاح! 🎉',
+                  'تمت عملية الدفع بنجاح. ستجد طلبك في قائمة طلباتي خلال لحظات.',
+                );
+                router.replace('/(buyer)/orders');
+              }
               return;
             }
             router.replace(`/order/${paymentOrderId}`);
