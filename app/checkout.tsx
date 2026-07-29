@@ -17,6 +17,12 @@ import { LoginRequired } from '../src/components/common/LoginRequired';
 import { cancelOrder, createOrder, initPayment } from '../src/api/orders';
 import type { PaymentMethod } from '../src/types';
 
+// Stripe يُنشئ جلسة الدفع مباشرةً على السيرفر ولا يحتاج طلباً في قاعدة البيانات مسبقاً.
+// نستخدم معرّفاً محلياً مؤقتاً كـ correlation id حتى يكتمل الدفع.
+function createLocalPaymentOrderId(): string {
+  return `local-${Date.now()}`;
+}
+
 const PAYMENT_OPTIONS = [
   { id: 'stripe' as PaymentMethod, label: 'بطاقة ائتمانية', icon: 'card-outline', desc: 'Visa / Mastercard / Mada' },
   { id: 'tabby' as PaymentMethod, label: 'Tabby', icon: 'calendar-outline', desc: 'اشتر الآن وادفع لاحقاً (4 أقساط)' },
@@ -72,23 +78,27 @@ export default function CheckoutScreen() {
     setLoading(true);
     let createdOrderId: string | null = null;
     try {
-      // إنشاء الطلب في السيرفر أولاً لجميع طرق الدفع —
-      // يضمن تتبع الطلب حتى لو أُلغي الدفع أو انقطع الاتصال.
-      const createdOrder = await createOrder({
-        items: items.map((i) => ({ serviceId: i.serviceId, quantity: i.quantity, notes: i.notes })),
-        paymentMethod: selectedPayment,
-        promoCode: promoCode || undefined,
-        address: address || undefined,
-        fullName: fullName.trim(),
-        phone: normalizedPhone,
-        city: city.trim(),
-        district: district.trim(),
-        street: street.trim(),
-        buildingNumber: buildingNumber.trim(),
-        notes,
-      });
-      const paymentOrderId = createdOrder.id;
-      createdOrderId = paymentOrderId;
+      // Stripe يُنشئ جلسة الدفع مباشرةً ولا يحتاج طلباً في السيرفر أولاً —
+      // نستخدم ID محلي مؤقت. أما باقي طرق الدفع فتُنشئ الطلب في السيرفر أولاً.
+      const paymentOrderId =
+        selectedPayment === 'stripe'
+          ? createLocalPaymentOrderId()
+          : (await createOrder({
+              items: items.map((i) => ({ serviceId: i.serviceId, quantity: i.quantity, notes: i.notes })),
+              paymentMethod: selectedPayment,
+              promoCode: promoCode || undefined,
+              address: address || undefined,
+              fullName: fullName.trim(),
+              phone: normalizedPhone,
+              city: city.trim(),
+              district: district.trim(),
+              street: street.trim(),
+              buildingNumber: buildingNumber.trim(),
+              notes,
+            })).id;
+      if (selectedPayment !== 'stripe') {
+        createdOrderId = paymentOrderId;
+      }
 
       if (selectedPayment !== 'wallet') {
         const payment = await initPayment({
