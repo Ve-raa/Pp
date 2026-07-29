@@ -24,10 +24,6 @@ const PAYMENT_OPTIONS = [
   { id: 'wallet' as PaymentMethod, label: 'المحفظة', icon: 'wallet-outline', desc: 'الدفع من رصيدك' },
 ];
 
-function createLocalPaymentOrderId(): string {
-  return `local-${Date.now()}`;
-}
-
 export default function CheckoutScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -76,27 +72,23 @@ export default function CheckoutScreen() {
     setLoading(true);
     let createdOrderId: string | null = null;
     try {
-      // Stripe creates the payment session directly on veraapp.app. It does
-      // not need a database order first, so use a local correlation id.
-      const paymentOrderId =
-        selectedPayment === 'stripe'
-          ? createLocalPaymentOrderId()
-          : (await createOrder({
-              items: items.map((i) => ({ serviceId: i.serviceId, quantity: i.quantity, notes: i.notes })),
-              paymentMethod: selectedPayment,
-              promoCode: promoCode || undefined,
-              address: address || undefined,
-              fullName: fullName.trim(),
-              phone: normalizedPhone,
-              city: city.trim(),
-              district: district.trim(),
-              street: street.trim(),
-              buildingNumber: buildingNumber.trim(),
-              notes,
-            })).id;
-      if (selectedPayment !== 'stripe') {
-        createdOrderId = paymentOrderId;
-      }
+      // إنشاء الطلب في السيرفر أولاً لجميع طرق الدفع —
+      // يضمن تتبع الطلب حتى لو أُلغي الدفع أو انقطع الاتصال.
+      const createdOrder = await createOrder({
+        items: items.map((i) => ({ serviceId: i.serviceId, quantity: i.quantity, notes: i.notes })),
+        paymentMethod: selectedPayment,
+        promoCode: promoCode || undefined,
+        address: address || undefined,
+        fullName: fullName.trim(),
+        phone: normalizedPhone,
+        city: city.trim(),
+        district: district.trim(),
+        street: street.trim(),
+        buildingNumber: buildingNumber.trim(),
+        notes,
+      });
+      const paymentOrderId = createdOrder.id;
+      createdOrderId = paymentOrderId;
 
       if (selectedPayment !== 'wallet') {
         const payment = await initPayment({
