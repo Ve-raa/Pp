@@ -124,45 +124,64 @@ export default function CheckoutScreen() {
 
         if (payment.paymentUrl) {
           setRedirecting(true);
-          // Open payment gateway in system browser; wait for vera:// deep-link redirect
+
+          // Track whether payment succeeded via background polling.
+          // The backend ignores the returnUrl we send and uses its own hardcoded
+          // https://veraapp.app/payment/return, so the vera:// deep-link never
+          // fires. We poll verifyPayment every 3 s and dismiss the browser the
+          // moment we confirm the payment went through — the user never has to
+          // close it manually or see the other app's page.
+          let wasSuccess = false;
+          let pollTimer: ReturnType<typeof setInterval> | null = null;
+
+          const paidStatuses = ['paid', 'succeeded', 'complete', 'success', 'completed'];
+
+          if (selectedPayment === 'stripe' && payment.paymentId) {
+            pollTimer = setInterval(async () => {
+              try {
+                const verified = await verifyPayment(payment.paymentId!);
+                if (paidStatuses.includes(verified.status ?? '')) {
+                  wasSuccess = true;
+                  clearInterval(pollTimer!);
+                  pollTimer = null;
+                  WebBrowser.dismissAuthSession(); // auto-close browser
+                }
+              } catch {
+                // ignore transient network errors — keep polling
+              }
+            }, 3000);
+          }
+
           let result: Awaited<ReturnType<typeof WebBrowser.openAuthSessionAsync>>;
           try {
             result = await WebBrowser.openAuthSessionAsync(
-            payment.paymentUrl,
-            'vera://payment',
-            { createTask: false },
-          );
+              payment.paymentUrl,
+              'vera://payment',
+              { createTask: false },
+            );
           } finally {
+            if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
             setRedirecting(false);
           }
 
-          const redirectedUrl =
-            result.type === 'success' ? result.url : '';
+          const redirectedUrl = result.type === 'success' ? result.url : '';
 
-          // Primary check: did we get a vera:// deep-link back?
-          let wasSuccess =
-            result.type === 'success' &&
-            redirectedUrl.includes('vera://payment/return');
-          let wasCancelled =
+          // Deep-link redirect (ideal path — works if server ever fixes returnUrl)
+          if (!wasSuccess && result.type === 'success' && redirectedUrl.includes('vera://payment/return')) {
+            wasSuccess = true;
+          }
+
+          const wasCancelled =
+            !wasSuccess &&
             result.type === 'success' &&
             redirectedUrl.includes('vera://payment/cancel');
 
-          // Fallback: the backend may ignore the returnUrl we send and use its own
-          // hardcoded URL (e.g. https://veraapp.app/payment/return), so the deep-link
-          // redirect never arrives and the browser closes with type === 'cancel'.
-          // Always verify the real payment status before treating a non-success as
-          // a cancellation.
-          if (!wasSuccess && selectedPayment === 'stripe' && payment.paymentId) {
+          // Last-resort check: browser closed for unknown reason, ask server once more
+          if (!wasSuccess && !wasCancelled && selectedPayment === 'stripe' && payment.paymentId) {
             try {
               const verified = await verifyPayment(payment.paymentId);
-              const paidStatuses = ['paid', 'succeeded', 'complete', 'success', 'completed'];
-              if (paidStatuses.includes(verified.status ?? '')) {
-                wasSuccess = true;
-                wasCancelled = false;
-              }
-            } catch {
-              // Network error during verification — fall through to cancel handling
-            }
+              if (paidStatuses.includes(verified.status ?? '')) wasSuccess = true;
+            } catch {}
           }
 
           if (!wasSuccess && wasCancelled) {
@@ -172,7 +191,7 @@ export default function CheckoutScreen() {
             return; // Stay on checkout screen
           }
 
-          // User dismissed browser without completing payment and it's not a success
+          // Browser dismissed without completing payment
           if (!wasSuccess && !wasCancelled) {
             return; // Stay on checkout screen silently
           }
