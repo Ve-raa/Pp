@@ -138,19 +138,43 @@ export default function CheckoutScreen() {
 
           const redirectedUrl =
             result.type === 'success' ? result.url : '';
-          const wasSuccess =
+
+          // Primary check: did we get a vera:// deep-link back?
+          let wasSuccess =
             result.type === 'success' &&
             redirectedUrl.includes('vera://payment/return');
-          const wasCancelled =
-            result.type === 'cancel' ||
-            (result.type === 'success' &&
-              redirectedUrl.includes('vera://payment/cancel'));
+          let wasCancelled =
+            result.type === 'success' &&
+            redirectedUrl.includes('vera://payment/cancel');
 
-          if (wasCancelled) {
+          // Fallback: the backend may ignore the returnUrl we send and use its own
+          // hardcoded URL (e.g. https://veraapp.app/payment/return), so the deep-link
+          // redirect never arrives and the browser closes with type === 'cancel'.
+          // Always verify the real payment status before treating a non-success as
+          // a cancellation.
+          if (!wasSuccess && selectedPayment === 'stripe' && payment.paymentId) {
+            try {
+              const verified = await verifyPayment(payment.paymentId);
+              const paidStatuses = ['paid', 'succeeded', 'complete', 'success', 'completed'];
+              if (paidStatuses.includes(verified.status ?? '')) {
+                wasSuccess = true;
+                wasCancelled = false;
+              }
+            } catch {
+              // Network error during verification — fall through to cancel handling
+            }
+          }
+
+          if (!wasSuccess && wasCancelled) {
             if (createdOrderId) {
               await cancelOrder(createdOrderId, 'payment_cancelled').catch(() => undefined);
             }
             return; // Stay on checkout screen
+          }
+
+          // User dismissed browser without completing payment and it's not a success
+          if (!wasSuccess && !wasCancelled) {
+            return; // Stay on checkout screen silently
           }
 
           if (wasSuccess) {
