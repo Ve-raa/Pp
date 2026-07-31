@@ -14,7 +14,7 @@ import { Header } from '../src/components/common/Header';
 import { useCartStore } from '../src/store/cartStore';
 import { useAuthStore } from '../src/store/authStore';
 import { LoginRequired } from '../src/components/common/LoginRequired';
-import { cancelOrder, createOrder, initPayment, verifyPayment } from '../src/api/orders';
+import { cancelOrder, createOrder, getOrders, initPayment } from '../src/api/orders';
 import type { PaymentMethod } from '../src/types';
 
 // Stripe يُنشئ جلسة الدفع مباشرةً على السيرفر ولا يحتاج طلباً في قاعدة البيانات مسبقاً.
@@ -123,35 +123,18 @@ export default function CheckoutScreen() {
         }
 
         if (payment.paymentUrl) {
+          // ── STEP 1: Snapshot existing orders so we can detect new ones later ──
+          // When Stripe redirects to https://veraapp.app/payment/return the server
+          // creates the order there.  The /api/payments/stripe/session endpoint does
+          // not exist on this backend (returns 404), so we cannot call verifyPayment.
+          // Instead we compare the orders list before and after the browser session.
+          let knownOrderIds = new Set<string>();
+          try {
+            const before = await getOrders({ limit: 20 });
+            before.orders.forEach((o) => knownOrderIds.add(String(o.id)));
+          } catch { /* proceed without snapshot */ }
+
           setRedirecting(true);
-
-          // Track whether payment succeeded via background polling.
-          // The backend ignores the returnUrl we send and uses its own hardcoded
-          // https://veraapp.app/payment/return, so the vera:// deep-link never
-          // fires. We poll verifyPayment every 3 s and dismiss the browser the
-          // moment we confirm the payment went through — the user never has to
-          // close it manually or see the other app's page.
-          let wasSuccess = false;
-          let pollTimer: ReturnType<typeof setInterval> | null = null;
-
-          const paidStatuses = ['paid', 'succeeded', 'complete', 'success', 'completed'];
-
-          if (selectedPayment === 'stripe' && payment.paymentId) {
-            pollTimer = setInterval(async () => {
-              try {
-                const verified = await verifyPayment(payment.paymentId!);
-                if (paidStatuses.includes(verified.status ?? '')) {
-                  wasSuccess = true;
-                  clearInterval(pollTimer!);
-                  pollTimer = null;
-                  WebBrowser.dismissAuthSession(); // auto-close browser
-                }
-              } catch {
-                // ignore transient network errors — keep polling
-              }
-            }, 3000);
-          }
-
           let result: Awaited<ReturnType<typeof WebBrowser.openAuthSessionAsync>>;
           try {
             result = await WebBrowser.openAuthSessionAsync(
@@ -160,77 +143,58 @@ export default function CheckoutScreen() {
               { createTask: false },
             );
           } finally {
-            if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
             setRedirecting(false);
           }
 
           const redirectedUrl = result.type === 'success' ? result.url : '';
 
-          // Deep-link redirect (ideal path — works if server ever fixes returnUrl)
-          if (!wasSuccess && result.type === 'success' && redirectedUrl.includes('vera://payment/return')) {
-            wasSuccess = true;
-          }
-
-          const wasCancelled =
-            !wasSuccess &&
-            result.type === 'success' &&
-            redirectedUrl.includes('vera://payment/cancel');
-
-          // Last-resort check: browser closed for unknown reason, ask server once more
-          if (!wasSuccess && !wasCancelled && selectedPayment === 'stripe' && payment.paymentId) {
-            try {
-              const verified = await verifyPayment(payment.paymentId);
-              if (paidStatuses.includes(verified.status ?? '')) wasSuccess = true;
-            } catch {}
-          }
-
-          if (!wasSuccess && wasCancelled) {
-            if (createdOrderId) {
-              await cancelOrder(createdOrderId, 'payment_cancelled').catch(() => undefined);
-            }
-            return; // Stay on checkout screen
-          }
-
-          // Browser dismissed without completing payment
-          if (!wasSuccess && !wasCancelled) {
-            return; // Stay on checkout screen silently
-          }
-
-          if (wasSuccess) {
+          // ── STEP 2: Check for vera:// deep-link (ideal — works if server ever ──
+          // fixes the returnUrl).
+          if (result.type === 'success' && redirectedUrl.includes('vera://payment/return')) {
             clearCart();
             hapticNotification();
-            if (selectedPayment === 'stripe') {
-              // Stripe: السيرفر قد ينشئ الطلب عبر webhook أو عند التحقق من الجلسة.
-              // نحاول الحصول على orderId حقيقي (غير local-) من السيرفر.
-              let realOrderId: string | null = null;
-              if (payment.paymentId) {
-                try {
-                  const verified = await verifyPayment(payment.paymentId);
-                  if (verified.orderId && !verified.orderId.startsWith('local-')) {
-                    realOrderId = verified.orderId;
-                  }
-                } catch {}
-              }
-              if (realOrderId) {
-                router.replace(`/order/${realOrderId}`);
-              } else {
-                // السيرفر لم يُرجع orderId حقيقياً بعد — نوجّه لقائمة الطلبات
-                Alert.alert(
-                  'تم الدفع بنجاح! 🎉',
-                  'تمت عملية الدفع بنجاح. ستجد طلبك في قائمة طلباتي خلال لحظات.',
-                );
-                router.replace('/(buyer)/orders');
-              }
-              return;
-            }
-            router.replace(`/order/${paymentOrderId}`);
+            Alert.alert('تم الدفع بنجاح! 🎉', 'ستجد طلبك في قائمة طلباتي خلال لحظات.');
+            router.replace('/(buyer)/orders');
             return;
           }
 
-          // Browser dismissed without a recognised redirect (user closed manually)
-          if (createdOrderId) {
-            await cancelOrder(createdOrderId, 'payment_dismissed').catch(() => undefined);
+          if (result.type === 'success' && redirectedUrl.includes('vera://payment/cancel')) {
+            if (createdOrderId) {
+              await cancelOrder(createdOrderId, 'payment_cancelled').catch(() => undefined);
+            }
+            return;
           }
+
+          // ── STEP 3: Browser closed (user pressed X after seeing veraapp.app). ──
+          // Poll the orders list for up to 30 s to find the newly created order.
+          // The server creates the order when the user lands on /payment/return,
+          // so by the time the user closes the browser the order usually exists.
+          setLoading(true);
+          let newOrderId: string | null = null;
+          for (let attempt = 0; attempt < 10; attempt++) {
+            await new Promise<void>((r) => setTimeout(r, 3000));
+            try {
+              const fresh = await getOrders({ limit: 20 });
+              const found = fresh.orders.find(
+                (o) => !knownOrderIds.has(String(o.id)) && o.status !== 'cancelled',
+              );
+              if (found) {
+                newOrderId = String(found.id);
+                break;
+              }
+            } catch { /* keep retrying */ }
+          }
+          setLoading(false);
+
+          if (newOrderId) {
+            clearCart();
+            hapticNotification();
+            router.replace(`/order/${newOrderId}`);
+            return;
+          }
+
+          // Nothing found — the user probably closed the browser before paying.
+          // Don't cancel anything; just stay on the checkout screen.
           return;
         }
 
